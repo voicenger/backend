@@ -1,4 +1,7 @@
 # Byte-compiled / optimized / DLL files
+
+*.pyc
+__pycache__
 __pycache__/
 *.py[cod]
 *$py.class
@@ -122,6 +125,8 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+/env
+*.env
 .env
 .venv
 env/
@@ -153,6 +158,10 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# VS Code
+db.sqlite3
+.vscode
 
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
