@@ -1,12 +1,10 @@
 name: Test and Publish Coverage
 
 on:
-  # push:
-  #   branches:
-  #     - main  
-  pull_request:
+  push:
     branches:
       - main
+  pull_request:
 
 
 jobs:
