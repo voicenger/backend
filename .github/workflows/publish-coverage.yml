@@ -46,7 +46,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report
-        path: coverage
+        path: htmlcov
 
   deploy:
     needs: test
@@ -67,4 +67,3 @@ jobs:
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./coverage
-        publish_branch: main
