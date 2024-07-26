@@ -32,6 +32,9 @@ jobs:
         pip install pytest pytest-django pytest-cov
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
+    - name: Set environment variables
+      run: echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> $GITHUB_ENV
+
     - name: Run tests and generate coverage report
       run: |
         pytest --cov=. --cov-report=html
