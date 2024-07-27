@@ -64,6 +64,9 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    - name: Install dependencies
+      run: python -m pip install --upgrade coverage
+
     - name: Download data
       uses: actions/download-artifact@v4
       with:
