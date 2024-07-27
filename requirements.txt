@@ -9,6 +9,7 @@ coverage==7.6.0
 distlib==0.3.8
 Django==4.2.14
 django-cors-headers==4.4.0
+django-allauth==0.63.6
 django-environ==0.11.2
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
