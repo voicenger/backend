@@ -76,7 +76,6 @@ jobs:
 
     - name: Coverage
       run: |
-        python -m coverage combine
         python -m coverage html --skip-covered --skip-empty
         python -m coverage report
         echo "## Coverage summary" >> $GITHUB_STEP_SUMMARY
