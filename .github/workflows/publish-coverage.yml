@@ -6,6 +6,9 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -45,11 +48,14 @@ jobs:
       env:
         DJANGO_SETTINGS_MODULE: voicenger.settings
 
+    - name: List files for debugging
+      run: ls -al ${{ github.workspace }}
+
     - name: Upload coverage data
       uses: actions/upload-artifact@v4
       with:
         name: coverage-data-${{ matrix.python-version }}
-        path: '${{ github.workspace }}/.coverage.*'
+        path: .coverage*
 
   coverage:
     needs: test
@@ -79,4 +85,3 @@ jobs:
       with:
         name: html-report
         path: htmlcov
-
