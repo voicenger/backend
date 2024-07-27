@@ -6,13 +6,19 @@ on:
       - main
   pull_request:
 
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: [3.9]
+        python-version:
+        - 3.9
+        - '3.10'
+        - '3.11'
 
     steps:
     - name: Check out code
@@ -38,32 +44,46 @@ jobs:
 
     - name: Run tests and generate coverage report
       run: |
-        pytest --cov=. --cov-report=html
+        pytest --cov=.
       env:
         DJANGO_SETTINGS_MODULE: voicenger.settings
 
-    - name: Upload coverage report artifact
+    - name: List files for debugging
+      run: ls -al ${{ github.workspace }}
+
+    - name: Upload coverage data
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
-        path: htmlcov
+        name: coverage-data-${{ matrix.python-version }}
+        path: .coverage*
 
-  deploy:
+  coverage:
     needs: test
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Download coverage report
+    - name: Install dependencies
+      run: python -m pip install --upgrade coverage
+
+    - name: Download data
       uses: actions/download-artifact@v4
       with:
-        name: coverage-report
-        path: coverage
+        path: ${{ github.workspace }}
+        pattern: coverage-data-*
+        merge-multiple: true
 
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/main'
-      uses: peaceiris/actions-gh-pages@v4
+    - name: Coverage
+      run: |
+        python -m coverage html --skip-covered --skip-empty
+        python -m coverage report
+        echo "## Coverage summary" >> $GITHUB_STEP_SUMMARY
+        python -m coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload HTML report
+      if: ${{ failure() }}
+      uses: actions/upload-artifact@v4
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./coverage
+        name: html-report
+        path: htmlcov
