@@ -166,15 +166,19 @@ AUTHENTICATION_BACKENDS = (
     'allauth.account.auth_backends.AuthenticationBackend',
 )
 
+# ID for the site, required for allauth
 SITE_ID = 1
 
+# Redirect URL after login or logout
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+# Require email for account registration, authentication, verification
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
+# Social account providers settings
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
@@ -192,3 +196,7 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+# Media files settings
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

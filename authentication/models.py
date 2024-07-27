@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.contrib.auth.models import User
 
 class User(AbstractUser):
     """
@@ -28,3 +29,16 @@ class User(AbstractUser):
         ordering = ['-date_joined']
         verbose_name = _('user')
         verbose_name_plural = _('users')
+
+# Define the Profile model
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    picture = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    nickname = models.CharField(max_length=100, unique=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
+    age = models.PositiveIntegerField(null=True, blank=True)
+    status = models.CharField(max_length=150, null=True, blank=True)
+
+    # String representation of the Profile model
+    def __str__(self):
+        return self.user.username
