@@ -11,7 +11,9 @@ source env/bin/activate
 python manage.py runserver
 
 python manage.py migrate
+```
 
+```python
 python manage.py createsuperuser
 
 pip install Django
