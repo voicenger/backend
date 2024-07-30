@@ -22,3 +22,7 @@ pip install Django
 ```python
 pip freeze > requirements.txt
 ```
+
+```update
+...
+```
