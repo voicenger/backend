@@ -1,18 +1,17 @@
 from urllib.parse import urlencode
 from django.forms import ValidationError
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.views import APIView
 from django.conf import settings
 from django.shortcuts import render, redirect
 from rest_framework.response import Response
-from rest_framework import status
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from .mixins import PublicApiMixin, ApiErrorsMixin
 from .utils import google_get_access_token, google_get_user_info, generate_tokens_for_user
-from .models import User
-from .serializers import UserSerializer
-from django.contrib.auth.decorators import login_required
+from .models import User, Profile
+from .serializers import UserSerializer, ProfileSerializer
 from .forms import ProfileForm
-
 
 class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
     class InputSerializer(serializers.Serializer):
@@ -87,8 +86,12 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
 @login_required
 def profile_view(request):
     # Gets the profile of the logged-in user and renders the profile.html template with the user's profile
-    profile = request.user.profile
-    return render(request, 'profile.html', {'profile': profile})
+    user = request.user
+    
+    profile, created = Profile.objects.get_or_create(user=user)
+    
+    profile_serializer = ProfileSerializer(profile)
+    return JsonResponse(profile_serializer.data)
 
 # View to edit the profile
 @login_required
