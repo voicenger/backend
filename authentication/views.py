@@ -1,16 +1,17 @@
 from urllib.parse import urlencode
 from django.forms import ValidationError
-from rest_framework import serializers
+from rest_framework import serializers, status
 from rest_framework.views import APIView
 from django.conf import settings
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from rest_framework.response import Response
-from rest_framework import status
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 from .mixins import PublicApiMixin, ApiErrorsMixin
 from .utils import google_get_access_token, google_get_user_info, generate_tokens_for_user
-from .models import User
-from .serializers import UserSerializer
-
+from .models import User, Profile
+from .serializers import UserSerializer, ProfileSerializer
+from .forms import ProfileForm
 
 class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
     class InputSerializer(serializers.Serializer):
@@ -80,3 +81,33 @@ class GoogleLoginApi(PublicApiMixin, ApiErrorsMixin, APIView):
         }
 
         return Response(response_data, status=status.HTTP_200_OK)
+
+# View to display the profile page
+@login_required
+def profile_view(request):
+    # Gets the profile of the logged-in user and renders the profile.html template with the user's profile
+    user = request.user
+    
+    profile, created = Profile.objects.get_or_create(user=user)
+    
+    profile_serializer = ProfileSerializer(profile)
+    return JsonResponse(profile_serializer.data)
+
+# View to edit the profile
+@login_required
+def edit_profile(request):
+    # Checks if the request method is POST
+    if request.method == 'POST':
+        # Binds data to the form, including files
+        form = ProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        # Checks if the form is valid
+        if form.is_valid():
+            # Saves the form if valid
+            form.save()
+            # Redirects to the profile page after saving
+            return redirect('profile')
+    else:
+        # Creates a form instance with the user's profile
+        form = ProfileForm(instance=request.user.profile)
+    # Renders the edit_profile.html template with the form
+    return render(request, 'edit_profile.html', {'form': form})
