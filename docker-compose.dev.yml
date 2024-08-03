@@ -1,0 +1,19 @@
+services:
+  voicenger:
+    build: .
+    container_name: voicenger
+    restart: unless-stopped
+    env_file: .env.dev
+    environment:
+      - DJANGO_SETTINGS_MODULE=voicenger.settings.development
+    ports:
+      - "8000:8000"
+    volumes:
+      - app:/app
+      - static_volume:/app/static
+      - media_volume:/app/media
+
+volumes:
+  app:
+  static_volume:
+  media_volume:

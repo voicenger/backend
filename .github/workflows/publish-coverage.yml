@@ -46,10 +46,7 @@ jobs:
       run: |
         pytest --cov=.
       env:
-        DJANGO_SETTINGS_MODULE: voicenger.settings
-
-    - name: List files for debugging
-      run: ls -al ${{ github.workspace }}
+        DJANGO_SETTINGS_MODULE: voicenger.settings.development
 
     - name: Upload coverage data
       uses: actions/upload-artifact@v4
