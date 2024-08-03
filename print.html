@@ -89,7 +89,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded "><a href="chapter_1.html"><strong aria-hidden="true">1.</strong> Chapter 1</a></li><li class="chapter-item expanded "><a href="aws.html"><strong aria-hidden="true">2.</strong> AWS</a></li><li class="chapter-item expanded "><a href="docker.html"><strong aria-hidden="true">3.</strong> Docker</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded "><a href="django.html"><strong aria-hidden="true">1.</strong> Django</a></li><li class="chapter-item expanded "><a href="aws.html"><strong aria-hidden="true">2.</strong> AWS</a></li><li class="chapter-item expanded "><a href="docker.html"><strong aria-hidden="true">3.</strong> Docker</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -174,7 +174,25 @@
 
                 <div id="content" class="content">
                     <main>
-                        <h1 id="chapter-1"><a class="header" href="#chapter-1">Chapter 1</a></h1>
+                        <h1 id="env"><a class="header" href="#env">Env</a></h1>
+<pre><code class="language-python">python3 -m venv env
+source env/bin/activate
+</code></pre>
+<h1 id="install-all-libs"><a class="header" href="#install-all-libs">Install all libs</a></h1>
+<pre><code>pip install -r requirements.txt
+</code></pre>
+<h1 id="run-server-and-create-migrates-to-db"><a class="header" href="#run-server-and-create-migrates-to-db">Run server and create migrates to db</a></h1>
+<pre><code class="language-python">python manage.py runserver
+
+python manage.py migrate
+</code></pre>
+<h1 id="create-superuser"><a class="header" href="#create-superuser">Create SuperUser</a></h1>
+<pre><code class="language-python">python manage.py createsuperuser
+
+</code></pre>
+<h1 id="sync-all-libs-to-file-requirementstxt"><a class="header" href="#sync-all-libs-to-file-requirementstxt">Sync all libs to file requirements.txt</a></h1>
+<pre><code class="language-python">pip freeze &gt; requirements.txt
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="aws-documentation"><a class="header" href="#aws-documentation">AWS Documentation</a></h1>
 <h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
 <p>This document provides a brief overview of how to work with AWS services for your project.</p>
