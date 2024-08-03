@@ -41,6 +41,7 @@ jobs:
         echo "ALLOWED_HOSTS=${{ secrets.ALLOWED_HOSTS }}" >> $GITHUB_ENV
         echo "GOOGLE_OAUTH2_CLIENT_ID=${{ secrets.GOOGLE_OAUTH2_CLIENT_ID }}" >> $GITHUB_ENV
         echo "GOOGLE_OAUTH2_CLIENT_SECRET=${{ secrets.GOOGLE_OAUTH2_CLIENT_SECRET }}" >> $GITHUB_ENV
+        echo "DJANGO_SETTINGS_MODULE =${{ voicenger.settings.development }}" >> $GITHUB_ENV
 
     - name: Run tests and generate coverage report
       run: |
