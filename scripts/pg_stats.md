@@ -1,19 +1,26 @@
 # PostgreSQL Statistics
 
 ## Total Connections
+```sql
  total_connections 
 -------------------
                  7
 (1 row)
 
+```
+
 ## Connections by Database
+```sql
  database | connections 
 ----------+-------------
  postgres |           2
           |           5
 (2 rows)
 
+```
+
 ## Connections by State
+```sql
  state  | connections 
 --------+-------------
         |           5
@@ -21,10 +28,13 @@
  idle   |           1
 (3 rows)
 
+```
+
 ## Detailed Connection Info
+```sql
  pid | username | database | client_address | client_port |         backend_start         | state  |         state_change          |                                                                                             query                                                                                              
 -----+----------+----------+----------------+-------------+-------------------------------+--------+-------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- 129 | postgres | postgres | 192.168.65.1   |       51508 | 2024-08-03 14:47:50.817352+00 | active | 2024-08-03 14:47:50.833144+00 | SELECT pid, usename AS username, datname AS database, client_addr AS client_address, client_port, backend_start, state, state_change, query FROM pg_stat_activity ORDER BY backend_start DESC;
+ 167 | postgres | postgres | 192.168.65.1   |       39073 | 2024-08-03 14:55:55.098697+00 | active | 2024-08-03 14:55:55.112625+00 | SELECT pid, usename AS username, datname AS database, client_addr AS client_address, client_port, backend_start, state, state_change, query FROM pg_stat_activity ORDER BY backend_start DESC;
   56 | postgres | postgres | 192.168.65.1   |       61103 | 2024-08-03 14:35:36.107036+00 | idle   | 2024-08-03 14:35:36.125826+00 | SELECT name, setting, unit, source, context, vartype, boot_val, reset_val FROM pg_settings;
   32 | postgres |          |                |             | 2024-08-03 14:29:37.585411+00 |        |                               | 
   31 |          |          |                |             | 2024-08-03 14:29:37.585148+00 |        |                               | 
@@ -33,13 +43,19 @@
   27 |          |          |                |             | 2024-08-03 14:29:37.578925+00 |        |                               | 
 (7 rows)
 
+```
+
 ## Long Running Queries
+```sql
                                                                                                                                 query                                                                                                                                 | state  | duration | pid | username | database | client_address 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------+----------+-----+----------+----------+----------------
- SELECT query, state, ROUND(EXTRACT(EPOCH FROM (clock_timestamp() - query_start))::NUMERIC, 2) AS duration, pid, usename AS username, datname AS database, client_addr AS client_address FROM pg_stat_activity WHERE state != 'idle' ORDER BY duration DESC LIMIT 10; | active |     0.00 | 130 | postgres | postgres | 192.168.65.1
+ SELECT query, state, ROUND(EXTRACT(EPOCH FROM (clock_timestamp() - query_start))::NUMERIC, 2) AS duration, pid, usename AS username, datname AS database, client_addr AS client_address FROM pg_stat_activity WHERE state != 'idle' ORDER BY duration DESC LIMIT 10; | active |     0.00 | 168 | postgres | postgres | 192.168.65.1
 (1 row)
 
+```
+
 ## Database Sizes
+```sql
   datname  |  size   
 -----------+---------
  postgres  | 8789 kB
@@ -47,7 +63,10 @@
  template0 | 7297 kB
 (3 rows)
 
+```
+
 ## Configuration Settings
+```sql
  max_connections 
 -----------------
  100
@@ -63,12 +82,18 @@
  128MB
 (1 row)
 
+```
+
 ## Blocking and Blocked Queries
+```sql
  blocked_pid | blocked_user | blocking_pid | blocking_user | blocked_query | blocking_query 
 -------------+--------------+--------------+---------------+---------------+----------------
 (0 rows)
 
+```
+
 ## PostgreSQL Settings
+```sql
                   name                  |                 setting                  | unit |       source       |      context      | vartype |                boot_val                 |                reset_val                 
 ----------------------------------------+------------------------------------------+------+--------------------+-------------------+---------+-----------------------------------------+------------------------------------------
  allow_in_place_tablespaces             | off                                      |      | default            | superuser         | bool    | off                                     | off
@@ -426,3 +451,4 @@
  zero_damaged_pages                     | off                                      |      | default            | superuser         | bool    | off                                     | off
 (353 rows)
 
+```
