@@ -1,6 +1,10 @@
 services:
   voicenger:
-    build: .
+    build:
+      context: .
+      target: build-env
+      args:
+        ENV: build-env
     container_name: voicenger
     restart: unless-stopped
     env_file: .env.dev
