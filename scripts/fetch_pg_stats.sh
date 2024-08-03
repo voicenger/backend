@@ -13,33 +13,56 @@ CONN="psql -h $PGHOST -p $PGPORT -U $PGUSER -d $PGDATABASE"
 # Output file
 OUTPUT_FILE="./pg_stats.md"
 
+# Write results to Markdown file
 {
   echo "# PostgreSQL Statistics"
   echo
   echo "## Total Connections"
+  echo '```sql'
   $CONN -c "SELECT COUNT(*) AS total_connections FROM pg_stat_activity;"
+  echo '```'
+  echo
 
   echo "## Connections by Database"
+  echo '```sql'
   $CONN -c "SELECT datname AS database, COUNT(*) AS connections FROM pg_stat_activity GROUP BY datname;"
+  echo '```'
+  echo
 
   echo "## Connections by State"
+  echo '```sql'
   $CONN -c "SELECT state, COUNT(*) AS connections FROM pg_stat_activity GROUP BY state;"
+  echo '```'
+  echo
 
   echo "## Detailed Connection Info"
+  echo '```sql'
   $CONN -c "SELECT pid, usename AS username, datname AS database, client_addr AS client_address, client_port, backend_start, state, state_change, query FROM pg_stat_activity ORDER BY backend_start DESC;"
+  echo '```'
+  echo
 
   echo "## Long Running Queries"
+  echo '```sql'
   $CONN -c "SELECT query, state, ROUND(EXTRACT(EPOCH FROM (clock_timestamp() - query_start))::NUMERIC, 2) AS duration, pid, usename AS username, datname AS database, client_addr AS client_address FROM pg_stat_activity WHERE state != 'idle' ORDER BY duration DESC LIMIT 10;"
+  echo '```'
+  echo
 
   echo "## Database Sizes"
+  echo '```sql'
   $CONN -c "SELECT pg_database.datname, pg_size_pretty(pg_database_size(pg_database.datname)) AS size FROM pg_database;"
+  echo '```'
+  echo
 
   echo "## Configuration Settings"
+  echo '```sql'
   $CONN -c "SHOW max_connections;"
   $CONN -c "SHOW superuser_reserved_connections;"
   $CONN -c "SHOW shared_buffers;"
+  echo '```'
+  echo
 
   echo "## Blocking and Blocked Queries"
+  echo '```sql'
   $CONN -c "
     SELECT 
       blocked_locks.pid AS blocked_pid,
@@ -71,7 +94,11 @@ OUTPUT_FILE="./pg_stats.md"
     WHERE 
       NOT blocked_locks.granted;
   "
+  echo '```'
+  echo
 
   echo "## PostgreSQL Settings"
+  echo '```sql'
   $CONN -c "SELECT name, setting, unit, source, context, vartype, boot_val, reset_val FROM pg_settings;"
+  echo '```'
 } | tee "$OUTPUT_FILE"
