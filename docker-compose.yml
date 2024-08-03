@@ -1,0 +1,34 @@
+services:
+  voicenger:
+    build:
+      context: .
+      target: prod
+      args:
+        ENV: prod
+    container_name: voicenger
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      - DJANGO_SETTINGS_MODULE=voicenger.settings.production
+    ports:
+      - "8000:8000"
+    volumes:
+      - app:/app
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:
+  app:
