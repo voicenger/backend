@@ -51,6 +51,8 @@ CUSTOM_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'channels',
+    'websockets',
 ]
 
 INSTALLED_APPS =  DEFAULT_APPS + CUSTOM_APPS
@@ -86,6 +88,9 @@ TEMPLATES = [
         },
     },
 ]
+
+#For WebSockets
+ASGI_APPLICATION = 'voicenger.asgi.application'
 
 WSGI_APPLICATION = 'voicenger.wsgi.application'
 
@@ -185,3 +190,10 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+#For WebSockets
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.RedisChannelLayer',
+    },
+}
