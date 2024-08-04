@@ -1,6 +1,88 @@
 from django.db import models
 
 class User(models.Model):
-    name = models.CharField(max_length=140)
-    nickname = models.CharField(max_length=50)
-    age = models.IntegerField()
+    username = models.CharField(max_length=100, unique=True)
+    first_name = models.CharField(max_length=50, blank=True, null=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
+    profile_pictures = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
+    date_of_birth = models.DateTimeField(blank=True, null=True)
+    facebook_profile = models.URLField(blank=True, null=True)
+    notifications_enabled = models.BooleanField(default=True)
+    last_login_at = models.DateTimeField(blank=True, null=True)
+    is_online = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.username
+
+
+class Chat(models.Model):
+    PRIVATE = 'Private'
+    GROUP = 'Group'
+    ANONIM_GROUP = 'Anonim Group'
+    CHANNEL = 'Channel'
+
+    CHAT_TYPE_CHOICES = [
+        (PRIVATE, 'Private'),
+        (GROUP, 'Group'),
+        (ANONIM_GROUP, 'Anonim Group'),
+        (CHANNEL, 'Channel'),
+    ]
+
+    chat_type = models.CharField(max_length=20, choices=CHAT_TYPE_CHOICES)
+    chat_image = models.ImageField(upload_to='chat_images/', blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    is_archived = models.BooleanField(default=False)
+    closed_at = models.DateTimeField(blank=True, null=True)
+    last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True, related_name='last_message_in_chat')
+
+    def __str__(self):
+        return f"{self.chat_type} Chat"
+
+
+class ChatParticipant(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    is_admin = models.BooleanField(default=False)
+    notifications_enabled = models.BooleanField(default=True)
+
+
+    def __str__(self):
+        return f"{self.user.username} in {self.chat.id}"
+
+
+class Message(models.Model):
+    TEXT = 'Text'
+    AUDIO = 'Audio'
+    VIDEO = 'Video'
+
+    MESSAGE_TYPE_CHOICES = [
+        (TEXT, 'Text'),
+        (AUDIO, 'Audio'),
+        (VIDEO, 'Video'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPE_CHOICES)
+    content = models.TextField(blank=True, null=True)
+    audio_file = models.FileField(upload_to='audio_files/', blank=True, null=True)
+    video_file = models.FileField(upload_to='video_files/', blank=True, null=True)
+    sent_at = models.DateTimeField(auto_now_add=True)
+    is_edited = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Message from {self.user.username} in {self.chat.id}"
+
+
+class MessageReadReceipt(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.CASCADE)
+    chat_participant = models.ForeignKey(ChatParticipant, on_delete=models.CASCADE)
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.chat_participant.user.username} read message {self.message.id}"
