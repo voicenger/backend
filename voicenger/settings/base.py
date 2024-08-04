@@ -90,7 +90,7 @@ TEMPLATES = [
 ]
 
 #For WebSockets
-ASGI_APPLICATION = 'your_project.asgi.application'
+ASGI_APPLICATION = 'voicenger.asgi.application'
 
 WSGI_APPLICATION = 'voicenger.wsgi.application'
 
@@ -194,6 +194,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 #For WebSockets
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels.layers.RedisChannelLayer',
     },
 }
