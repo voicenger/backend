@@ -19,7 +19,9 @@ class GroupChat(models.Model):
 
     def add_participant(self, user):
         if self.participants.count() >= 100:
-            raise ValidationError("The group chat cannot have more than 100 members.")
+            raise ValidationError("The group chat cannot have more than 100 participants.")
+        if self.participants.filter(user=user).exists():
+            raise ValidationError("User is already a participant in this group chat.")
         GroupChatParticipant.objects.create(chat=self, user=user)
 
 
