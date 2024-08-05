@@ -53,6 +53,7 @@ CUSTOM_APPS = [
     'allauth.socialaccount.providers.google',
     'channels',
     'websockets',
+    'chat',
 ]
 
 INSTALLED_APPS =  DEFAULT_APPS + CUSTOM_APPS
