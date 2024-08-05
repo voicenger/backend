@@ -22,7 +22,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
 
-        # Set user status to online
+        # Set user status to online 
         await self.update_user_status(True)
 
         # Send the message history upon connection
