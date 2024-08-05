@@ -3,6 +3,7 @@ from asyncio.log import logger
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from voicengerdb.models import Message, Chat, User, ChatParticipant, MessageReadReceipt
+from django.utils import timezone
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -21,6 +22,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
 
+        # Set user status to online 
+        await self.update_user_status(True)
+
         # Send the message history upon connection
         await self.send_message_history()
 
@@ -33,6 +37,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+
+        # Set user status to offline
+        await self.update_user_status(False)
 
     async def receive(self, text_data):
         # Decode the received data
@@ -108,3 +115,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'user_id': message.user.id,
                 'sent_at': message.sent_at.isoformat(),
             }))
+
+    @database_sync_to_async
+    def update_user_status(self, is_online):
+        # Get the user object
+        user = User.objects.get(id=self.scope['user'].id)
+        # Update user status
+        user.is_online = is_online
+        user.last_login_at = timezone.now() if is_online else user.last_login_at
+        user.save()
