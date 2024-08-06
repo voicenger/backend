@@ -54,6 +54,7 @@ CUSTOM_APPS = [
     'channels',
     'websockets',
     'chat',
+    'drf_yasg',
 ]
 
 INSTALLED_APPS =  DEFAULT_APPS + CUSTOM_APPS
