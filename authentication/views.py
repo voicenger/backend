@@ -111,3 +111,7 @@ def edit_profile(request):
         form = ProfileForm(instance=request.user.profile)
     # Renders the edit_profile.html template with the form
     return render(request, 'edit_profile.html', {'form': form})
+
+
+def test_page(request):
+    return render(request, 'authentication/test_page.html')
