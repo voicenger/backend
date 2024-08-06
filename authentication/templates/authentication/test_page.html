@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Чат</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #message-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        #message-form {
+            display: flex;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+        }
+        #message-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #send-button {
+            padding: 10px;
+            border: none;
+            background-color: #007BFF;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #0056B3;
+        }
+        .message {
+            margin-bottom: 10px;
+        }
+        .message-text {
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #F1F1F1;
+        }
+        .message-audio, .message-video, .message-image, .message-file {
+            margin-bottom: 10px;
+        }
+        .message-audio audio, .message-video video, .message-image img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="message-container"></div>
+        <form id="message-form">
+            <input type="text" id="message-input" placeholder="Введіть повідомлення..." />
+            <button type="submit" id="send-button">Відправити</button>
+        </form>
+    </div>
+    <script>
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/chat/'
+        );
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const messageContainer = document.getElementById('message-container');
+            let messageElement = document.createElement('div');
+            messageElement.classList.add('message');
+            if (data.message_type === 'text') {
+                let messageText = document.createElement('div');
+                messageText.classList.add('message-text');
+                messageText.innerText = data.message;
+                messageElement.appendChild(messageText);
+            } else if (data.message_type === 'audio') {
+                let audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = data.audio_file;
+                messageElement.classList.add('message-audio');
+                messageElement.appendChild(audio);
+            } else if (data.message_type === 'video') {
+                let video = document.createElement('video');
+                video.controls = true;
+                video.src = data.video_file;
+                messageElement.classList.add('message-video');
+                messageElement.appendChild(video);
+            } else if (data.message_type === 'image') {
+                let image = document.createElement('img');
+                image.src = data.image_file;
+                messageElement.classList.add('message-image');
+                messageElement.appendChild(image);
+            } else if (data.message_type === 'file') {
+                let link = document.createElement('a');
+                link.href = data.attached_file;
+                link.innerText = 'Завантажити файл';
+                messageElement.classList.add('message-file');
+                messageElement.appendChild(link);
+            }
+            messageContainer.appendChild(messageElement);
+            messageContainer.scrollTop = messageContainer.scrollHeight;
+        };
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+        document.getElementById('message-form').onsubmit = function(e) {
+            e.preventDefault();
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value;
+            chatSocket.send(JSON.stringify({
+                'message_type': 'text',
+                'message': message
+            }));
+            messageInput.value = '';
+        };
+    </script>
+</body>
+</html>
