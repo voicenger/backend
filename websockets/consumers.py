@@ -8,6 +8,7 @@ class YourConsumer(AsyncWebsocketConsumer):
             self.group_name,
             self.channel_name
         )
+
         await self.accept()
         print("WebSocket connected")
 
