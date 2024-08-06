@@ -7,36 +7,18 @@ from django.utils import timezone
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # Get the room name from the URL
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        # Create a group name for the room
-        self.room_group_name = 'chat_%s' % self.room_name
-
         # Log the connection event
-        logger.debug(f"User connected to chat: {self.room_name}")
+        logger.debug("User connected")
 
-        # Add the channel to the room group
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        # Accept the WebSocket connection
         await self.accept()
 
         # Set user status to online
         await self.update_user_status(True)
 
-        # Send the message history upon connection
-        await self.send_message_history()
-
     async def disconnect(self, close_code):
         # Log the disconnection event
-        logger.debug(f"User disconnected from chat: {self.room_name} with code {close_code}")
-
-        # Remove the channel from the room group
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        logger.debug(f"User disconnected with code {close_code}")
 
         # Set user status to offline
         await self.update_user_status(False)
@@ -44,41 +26,47 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         # Decode the received data
         text_data_json = json.loads(text_data)
+        action = text_data_json.get('action')  # Extract action from message
+        room_name = text_data_json.get('room_name')  # Extract room_name from message if applicable
         message_type = text_data_json.get('message_type', Message.TEXT)
         user_id = self.scope['user'].id
 
         # Log the received message
-        logger.debug(f"Message received in chat {self.room_name} : {text_data_json}")
+        logger.debug(f"Message received: {text_data_json}")
 
-        # Process different types of messages
-        if message_type == Message.TEXT:
-            message_content = text_data_json.get('message')
-            await self.save_message(user_id, self.room_name, message_content, message_type)
-        elif message_type == Message.AUDIO:
-            audio_file = text_data_json.get('audio_file')
-            await self.save_message(user_id, self.room_name, None, message_type, audio_file=audio_file)
-        elif message_type == Message.VIDEO:
-            video_file = text_data_json.get('video_file')
-            await self.save_message(user_id, self.room_name, None, message_type, video_file=video_file)
-        elif message_type == Message.IMAGE:
-            image_file = text_data_json.get('image_file')
-            await self.save_message(user_id, self.room_name, None, message_type, image_file=image_file)
-        elif message_type == Message.FILE:
-            attached_file = text_data_json.get('attached_file')
-            await self.save_message(user_id, self.room_name, None, message_type, attached_file=attached_file)
+        # Process different actions
+        if action == 'send_message':
+            if message_type == Message.TEXT:
+                message_content = text_data_json.get('message')
+                await self.save_message(user_id, room_name, message_content, message_type)
+            elif message_type == Message.AUDIO:
+                audio_file = text_data_json.get('audio_file')
+                await self.save_message(user_id, room_name, None, message_type, audio_file=audio_file)
+            elif message_type == Message.VIDEO:
+                video_file = text_data_json.get('video_file')
+                await self.save_message(user_id, room_name, None, message_type, video_file=video_file)
+            elif message_type == Message.IMAGE:
+                image_file = text_data_json.get('image_file')
+                await self.save_message(user_id, room_name, None, message_type, image_file=image_file)
+            elif message_type == Message.FILE:
+                attached_file = text_data_json.get('attached_file')
+                await self.save_message(user_id, room_name, None, message_type, attached_file=attached_file)
 
-        # Send the message to all participants in the room
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': text_data_json,
-                'user_id': user_id
-            }
-        )
+            # Send the message to all participants in the room
+            await self.channel_layer.group_send(
+                f'chat_{room_name}',
+                {
+                    'type': 'chat_message',
+                    'message': text_data_json,
+                    'user_id': user_id
+                }
+            )
 
-        # Mark messages as read
-        await self.mark_messages_as_read(user_id, self.room_name)
+            # Mark messages as read
+            await self.mark_messages_as_read(user_id, room_name)
+        elif action == 'get_history':
+            # Send message history
+            await self.send_message_history(room_name)
 
     async def chat_message(self, event):
         # Get the message and user ID from the event
@@ -86,7 +74,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_id = event['user_id']
 
         # Log the sent message
-        logger.debug(f"Message sent to chat {self.room_name} from user {user_id}: {message}")
+        logger.debug(f"Message sent from user {user_id}: {message}")
 
         # Send the message to the client
         await self.send(text_data=json.dumps({
@@ -129,9 +117,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
             MessageReadReceipt(message=message, chat_participant=chat_participant) for message in unread_messages
         ])
 
-    async def send_message_history(self):
+    async def send_message_history(self, room_name):
         # Retrieve the message history for the room
-        messages = await self.get_chat_history(self.room_name)
+        messages = await self.get_chat_history(room_name)
         # Send the message history to the client
         for message in messages:
             message_data = {
