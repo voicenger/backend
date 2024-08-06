@@ -22,7 +22,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         await self.accept()
 
-        # Set user status to online 
+        # Set user status to online
         await self.update_user_status(True)
 
         # Send the message history upon connection
@@ -44,21 +44,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         # Decode the received data
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        message_type = text_data_json.get('message_type', Message.TEXT)
         user_id = self.scope['user'].id
 
         # Log the received message
-        logger.debug(f"Message received in chat {self.room_name} : {message}")
+        logger.debug(f"Message received in chat {self.room_name} : {text_data_json}")
 
-        # Save the message to the database
-        await self.save_message(user_id, self.room_name, message)
+        # Process different types of messages
+        if message_type == Message.TEXT:
+            message_content = text_data_json.get('message')
+            await self.save_message(user_id, self.room_name, message_content, message_type)
+        elif message_type == Message.AUDIO:
+            audio_file = text_data_json.get('audio_file')
+            await self.save_message(user_id, self.room_name, None, message_type, audio_file=audio_file)
+        elif message_type == Message.VIDEO:
+            video_file = text_data_json.get('video_file')
+            await self.save_message(user_id, self.room_name, None, message_type, video_file=video_file)
+        elif message_type == Message.IMAGE:
+            image_file = text_data_json.get('image_file')
+            await self.save_message(user_id, self.room_name, None, message_type, image_file=image_file)
+        elif message_type == Message.FILE:
+            attached_file = text_data_json.get('attached_file')
+            await self.save_message(user_id, self.room_name, None, message_type, attached_file=attached_file)
 
         # Send the message to all participants in the room
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message,
+                'message': text_data_json,
                 'user_id': user_id
             }
         )
@@ -81,12 +95,22 @@ class ChatConsumer(AsyncWebsocketConsumer):
         }))
 
     @database_sync_to_async
-    def save_message(self, user_id, room_name, message):
+    def save_message(self, user_id, room_name, content, message_type, audio_file=None, video_file=None, image_file=None, attached_file=None):
         # Get the user and chat objects
         user = User.objects.get(id=user_id)
         chat = Chat.objects.get(id=room_name)  # Assuming room_name corresponds to the chat ID
-        # Create a new message in the database
-        Message.objects.create(user=user, chat=chat, content=message, message_type=Message.TEXT)
+
+        # Save the message to the database based on its type
+        if message_type == Message.TEXT:
+            Message.objects.create(user=user, chat=chat, content=content, message_type=message_type)
+        elif message_type == Message.AUDIO:
+            Message.objects.create(user=user, chat=chat, audio_file=audio_file, message_type=message_type)
+        elif message_type == Message.VIDEO:
+            Message.objects.create(user=user, chat=chat, video_file=video_file, message_type=message_type)
+        elif message_type == Message.IMAGE:
+            Message.objects.create(user=user, chat=chat, image_file=image_file, message_type=message_type)
+        elif message_type == Message.FILE:
+            Message.objects.create(user=user, chat=chat, attached_file=attached_file, message_type=message_type)
 
     @database_sync_to_async
     def get_chat_history(self, room_name):
@@ -110,17 +134,28 @@ class ChatConsumer(AsyncWebsocketConsumer):
         messages = await self.get_chat_history(self.room_name)
         # Send the message history to the client
         for message in messages:
-            await self.send(text_data=json.dumps({
+            message_data = {
                 'message': message.content,
                 'user_id': message.user.id,
                 'sent_at': message.sent_at.isoformat(),
-            }))
+                'message_type': message.message_type,
+            }
+            # Add the appropriate file URL if the message is not text
+            if message.message_type == Message.AUDIO:
+                message_data['audio_file'] = message.audio_file.url
+            elif message.message_type == Message.VIDEO:
+                message_data['video_file'] = message.video_file.url
+            elif message.message_type == Message.IMAGE:
+                message_data['image_file'] = message.image_file.url
+            elif message.message_type == Message.FILE:
+                message_data['attached_file'] = message.attached_file.url
+
+            await self.send(text_data=json.dumps(message_data))
 
     @database_sync_to_async
     def update_user_status(self, is_online):
-        # Get the user object
+        # Update the user's online status
         user = User.objects.get(id=self.scope['user'].id)
-        # Update user status
         user.is_online = is_online
         user.last_login_at = timezone.now() if is_online else user.last_login_at
         user.save()
