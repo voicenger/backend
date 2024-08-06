@@ -56,24 +56,30 @@ class ChatParticipant(models.Model):
 
 
 class Message(models.Model):
-    TEXT = 'Text'
-    AUDIO = 'Audio'
-    VIDEO = 'Video'
+    TEXT = 'text'
+    AUDIO = 'audio'
+    VIDEO = 'video'
+    IMAGE = 'image'
+    FILE = 'file'
 
     MESSAGE_TYPE_CHOICES = [
         (TEXT, 'Text'),
         (AUDIO, 'Audio'),
         (VIDEO, 'Video'),
+        (IMAGE, 'Image'),
+        (FILE, 'File'),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
-    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPE_CHOICES)
     content = models.TextField(blank=True, null=True)
-    audio_file = models.FileField(upload_to='audio_files/', blank=True, null=True)
-    video_file = models.FileField(upload_to='video_files/', blank=True, null=True)
+    audio_file = models.FileField(upload_to='audio/', blank=True, null=True)
+    video_file = models.FileField(upload_to='video/', blank=True, null=True)
+    image_file = models.ImageField(upload_to='images/', blank=True, null=True)
+    attached_file = models.FileField(upload_to='files/', blank=True, null=True)
+    message_type = models.CharField(max_length=10, choices=MESSAGE_TYPE_CHOICES, default=TEXT)
     sent_at = models.DateTimeField(auto_now_add=True)
-    is_edited = models.BooleanField(default=True)
+    is_edited = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Message from {self.user.username} in {self.chat.id}"
