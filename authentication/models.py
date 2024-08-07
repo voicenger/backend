@@ -41,7 +41,7 @@ class Profile(models.Model):
     age = models.PositiveIntegerField(null=True, blank=True)
     status = models.CharField(max_length=150, null=True, blank=True)
 
-    # String representation of the Profile model
+    # String representation of the Profile model 
     def __str__(self):
         return self.user.username
 
