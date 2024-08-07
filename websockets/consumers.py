@@ -1,9 +1,6 @@
 import json
 import httpx
 from channels.generic.websocket import AsyncWebsocketConsumer
-from asgiref.sync import sync_to_async
-from voicengerdb.models import User
-from voicengerdb.serializers import UserSerializer
 
 class APIGatewayConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -26,60 +23,59 @@ class APIGatewayConsumer(AsyncWebsocketConsumer):
             text_data_json = json.loads(text_data)
             print(f"Decoded JSON: {text_data_json}")
 
-            message_type = text_data_json.get('type')
-            if not message_type:
+            api_endpoint = text_data_json.get('api_endpoint')
+            if not api_endpoint:
+                print("API endpoint is missing")
                 await self.send(text_data=json.dumps({
-                    'error': 'Message type is missing'
+                    'error': 'API endpoint is missing'
                 }))
                 return
 
-            if message_type == 'get_users':
-                await self.get_users()
-            else:
-                api_endpoint = text_data_json.get('api_endpoint')
-                if not api_endpoint:
-                    print("API endpoint is missing")
-                    await self.send(text_data=json.dumps({
-                        'error': 'API endpoint is missing'
-                    }))
-                    return
+            request_data = text_data_json.get('data', {})
+            method = text_data_json.get('method', 'POST').upper()
+            headers = text_data_json.get('headers', {})
 
-                request_data = text_data_json.get('data', {})
-                method = text_data_json.get('method', 'POST').upper()
+            print(f"API endpoint received: {api_endpoint}")
+            print(f"Request data: {request_data}")
+            print(f"Request method: {method}")
+            print(f"Request headers: {headers}")
 
-                print(f"API endpoint received: {api_endpoint}")
-                print(f"Request data: {request_data}")
-                print(f"Request method: {method}")
+            response = await self.call_api(api_endpoint, request_data, method, headers)
+            print(f"API response: {response}")
 
-                response = await self.call_api(api_endpoint, request_data, method)
-                print(f"API response: {response}")
-
-                await self.send(text_data=json.dumps({
-                    'response': response
-                }))
+            await self.send(text_data=json.dumps({
+                'response': response
+            }))
         except json.JSONDecodeError:
             print("Received invalid JSON")
             await self.send(text_data=json.dumps({
                 'error': 'Invalid JSON'
             }))
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            await self.send(text_data=json.dumps({
+                'error': 'An unexpected error occurred',
+                'message': str(e)
+            }))
 
-    async def call_api(self, endpoint, data, method):
+    async def call_api(self, endpoint, data, method, headers):
         async with httpx.AsyncClient() as client:
             try:
                 if method == 'GET':
-                    response = await client.get(endpoint, params=data)
+                    response = await client.get(endpoint, params=data, headers=headers)
                 elif method == 'POST':
-                    response = await client.post(endpoint, json=data)
+                    response = await client.post(endpoint, json=data, headers=headers)
                 elif method == 'PUT':
-                    response = await client.put(endpoint, json=data)
+                    response = await client.put(endpoint, json=data, headers=headers)
                 elif method == 'PATCH':
-                    response = await client.patch(endpoint, json=data)
+                    response = await client.patch(endpoint, json=data, headers=headers)
                 elif method == 'DELETE':
-                    response = await client.delete(endpoint, json=data)
+                    response = await client.delete(endpoint, headers=headers)
                 else:
                     return {"status": "error", "message": f"Unsupported method {method}"}
 
-                response_data = response.json()
+                response.raise_for_status()
+                response_data = response.json() if response.content else {}
                 return {"status": "success", "data": response_data}
             except httpx.HTTPStatusError as e:
                 print(f"HTTP error occurred: {e}")
@@ -87,12 +83,6 @@ class APIGatewayConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 print(f"An error occurred: {e}")
                 return {"status": "error", "message": "An internal error occurred"}
-
-    @sync_to_async
-    def get_users(self):
-        users = User.objects.all()
-        serialized_users = UserSerializer(users, many=True).data
-        return serialized_users
 
 # Пример JSON-запроса через WebSocket
 # {
