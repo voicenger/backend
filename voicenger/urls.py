@@ -23,7 +23,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("authentication.urls")),
+    path("api/", include("voicengerdb.urls")),
     path('auth/', include('authentication.urls')),
     path('api/voicengerdb/', include('voicengerdb.urls')),
     path('api/chat/', include('chat.urls')),

@@ -1,6 +1,22 @@
 from django.db import models
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
-class User(models.Model):
+
+class UserManager(BaseUserManager):
+    def create_user(self, username, password=None, **extra_fields):
+        if not username:
+            raise ValueError('The Username field must be set')
+        user = self.model(username=username, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, username, password=None, **extra_fields):
+        extra_fields.setdefault('is_admin', True)
+        return self.create_user(username, password, **extra_fields)
+
+
+class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=100, unique=True)
     first_name = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50, blank=True, null=True)
@@ -11,10 +27,38 @@ class User(models.Model):
     notifications_enabled = models.BooleanField(default=True)
     last_login_at = models.DateTimeField(blank=True, null=True)
     is_online = models.BooleanField(default=True)
-    is_admin = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
+
+    groups = models.ManyToManyField(
+        'auth.Group',
+        related_name='voicengerdb_user_set',
+        blank=True,
+        help_text=('The groups this user belongs to. A user will get all permissions granted to each of their groups.'),
+        verbose_name=('groups'),
+    )
+    user_permissions = models.ManyToManyField(
+        'auth.Permission',
+        related_name='voicengerdb_user_set',
+        blank=True,
+        help_text=('Specific permissions for this user.'),
+        verbose_name=('user permissions'),
+    )
+
+    objects = UserManager()
+
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.username
+
+    @property
+    def is_staff(self):
+        return self.is_admin
+
+    @property
+    def is_superuser(self):
+        return self.is_admin
 
 
 class Chat(models.Model):
@@ -37,7 +81,8 @@ class Chat(models.Model):
     updated_at = models.DateTimeField(auto_now_add=True)
     is_archived = models.BooleanField(default=False)
     closed_at = models.DateTimeField(blank=True, null=True)
-    last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True, related_name='last_message_in_chat')
+    last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='last_message_in_chat')
 
     def __str__(self):
         return f"{self.chat_type} Chat"
@@ -49,7 +94,6 @@ class ChatParticipant(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
     is_admin = models.BooleanField(default=False)
     notifications_enabled = models.BooleanField(default=True)
-
 
     def __str__(self):
         return f"{self.user.username} in {self.chat.id}"
