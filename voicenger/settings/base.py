@@ -25,9 +25,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
+ALLOWED_HOSTS = ['localhost', 'Vlad31252.pythonanywhere.com']
 
 # Application definition
 
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'voicengerapp',
+    'channels'
 
 ]
 
@@ -79,7 +80,15 @@ TEMPLATES = [
     },
 ]
 
+ASGI_APPLICATION = 'voicenger.asgi.application'
+
 WSGI_APPLICATION = 'voicenger.wsgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/<version>/ref/settings/#databases
