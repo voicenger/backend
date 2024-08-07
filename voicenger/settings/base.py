@@ -34,7 +34,7 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
 # Application definition
 DEFAULT_APPS = [
-    "corsheaders",
+    'corsheaders',
     'voicengerdb',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -141,6 +141,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost",
     "http://localhost:3000",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
     ]
 
 # Google OAuth2 settings
@@ -225,3 +227,5 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
 }
+
+CORS_ALLOW_CREDENTIALS = True

@@ -1,5 +1,5 @@
-from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_protect
+from django.utils.decorators import method_decorator
 from rest_framework import viewsets
 from drf_yasg.utils import swagger_auto_schema
 from .models import User, Chat, ChatParticipant, Message, MessageReadReceipt
@@ -15,10 +15,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 @ensure_csrf_cookie
 def get_csrf_token(request):
     return JsonResponse({'csrfToken': get_token(request)})
 
+@method_decorator(csrf_protect, name='dispatch')
 class UserRegistrationView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = UserRegistrationSerializer(data=request.data)
@@ -27,6 +29,7 @@ class UserRegistrationView(APIView):
             return Response({'detail': 'User created successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_protect, name='dispatch')
 class UserLoginView(APIView):
     def post(self, request, *args, **kwargs):
         logger.debug(f"Login request received with data: {request.data}")
@@ -37,6 +40,7 @@ class UserLoginView(APIView):
         logger.debug(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@method_decorator(csrf_protect, name='dispatch')
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -66,6 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+@method_decorator(csrf_protect, name='dispatch')
 class ChatViewSet(viewsets.ModelViewSet):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
@@ -95,6 +100,7 @@ class ChatViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+@method_decorator(csrf_protect, name='dispatch')
 class ChatParticipantViewSet(viewsets.ModelViewSet):
     queryset = ChatParticipant.objects.all()
     serializer_class = ChatParticipantSerializer
@@ -129,6 +135,7 @@ class ChatParticipantViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+@method_decorator(csrf_protect, name='dispatch')
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
@@ -159,6 +166,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+@method_decorator(csrf_protect, name='dispatch')
 class MessageReadReceiptViewSet(viewsets.ModelViewSet):
     queryset = MessageReadReceipt.objects.all()
     serializer_class = MessageReadReceiptSerializer
