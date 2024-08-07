@@ -1,6 +1,9 @@
 import json
 import httpx
 from channels.generic.websocket import AsyncWebsocketConsumer
+from asgiref.sync import sync_to_async
+from voicengerdb.models import User
+from voicengerdb.serializers import UserSerializer
 
 class APIGatewayConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -19,17 +22,41 @@ class APIGatewayConsumer(AsyncWebsocketConsumer):
             return
 
         try:
+            print(f"Received message: {text_data}")
             text_data_json = json.loads(text_data)
-            api_endpoint = text_data_json['api_endpoint']
-            request_data = text_data_json.get('data', {})
-            method = text_data_json.get('method', 'POST').upper()
+            print(f"Decoded JSON: {text_data_json}")
 
-            print(f"API endpoint received: {api_endpoint}")
+            message_type = text_data_json.get('type')
+            if not message_type:
+                await self.send(text_data=json.dumps({
+                    'error': 'Message type is missing'
+                }))
+                return
 
-            response = await self.call_api(api_endpoint, request_data, method)
-            await self.send(text_data=json.dumps({
-                'response': response
-            }))
+            if message_type == 'get_users':
+                await self.get_users()
+            else:
+                api_endpoint = text_data_json.get('api_endpoint')
+                if not api_endpoint:
+                    print("API endpoint is missing")
+                    await self.send(text_data=json.dumps({
+                        'error': 'API endpoint is missing'
+                    }))
+                    return
+
+                request_data = text_data_json.get('data', {})
+                method = text_data_json.get('method', 'POST').upper()
+
+                print(f"API endpoint received: {api_endpoint}")
+                print(f"Request data: {request_data}")
+                print(f"Request method: {method}")
+
+                response = await self.call_api(api_endpoint, request_data, method)
+                print(f"API response: {response}")
+
+                await self.send(text_data=json.dumps({
+                    'response': response
+                }))
         except json.JSONDecodeError:
             print("Received invalid JSON")
             await self.send(text_data=json.dumps({
@@ -60,6 +87,12 @@ class APIGatewayConsumer(AsyncWebsocketConsumer):
             except Exception as e:
                 print(f"An error occurred: {e}")
                 return {"status": "error", "message": "An internal error occurred"}
+
+    @sync_to_async
+    def get_users(self):
+        users = User.objects.all()
+        serialized_users = UserSerializer(users, many=True).data
+        return serialized_users
 
 # Пример JSON-запроса через WebSocket
 # {
