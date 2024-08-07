@@ -1,49 +1,44 @@
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_protect
-from django.utils.decorators import method_decorator
 from rest_framework import viewsets
 from drf_yasg.utils import swagger_auto_schema
 from .models import User, Chat, ChatParticipant, Message, MessageReadReceipt
 from .serializers import UserSerializer, ChatSerializer, ChatParticipantSerializer, MessageSerializer, \
-    MessageReadReceiptSerializer
+    MessageReadReceiptSerializer, UserRegistrationSerializer, UserLoginSerializer
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserRegistrationSerializer, UserLoginSerializer
-from django.http import JsonResponse
-from django.middleware.csrf import get_token
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 import logging
 
 logger = logging.getLogger(__name__)
 
-
-@ensure_csrf_cookie
-def get_csrf_token(request):
-    return JsonResponse({'csrfToken': get_token(request)})
-
-@method_decorator(csrf_protect, name='dispatch')
 class UserRegistrationView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            return Response({'detail': 'User created successfully'}, status=status.HTTP_201_CREATED)
+            serializer.save()
+            return Response({'detail': 'User registered successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@method_decorator(csrf_protect, name='dispatch')
 class UserLoginView(APIView):
     def post(self, request, *args, **kwargs):
         logger.debug(f"Login request received with data: {request.data}")
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
+            user = User.objects.get(username=serializer.validated_data['username'])
+            refresh = RefreshToken.for_user(user)
             logger.debug("Serializer is valid.")
-            return Response(serializer.validated_data, status=status.HTTP_200_OK)
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }, status=status.HTTP_200_OK)
         logger.debug(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@method_decorator(csrf_protect, name='dispatch')
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=["Users"], operation_description="Retrieve all users", operation_id='ListUsers')
     def list(self, request, *args, **kwargs):
@@ -70,10 +65,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_protect, name='dispatch')
 class ChatViewSet(viewsets.ModelViewSet):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=["Chats"], operation_description="Retrieve all chats", operation_id='ListChats')
     def list(self, request, *args, **kwargs):
@@ -100,10 +95,10 @@ class ChatViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_protect, name='dispatch')
 class ChatParticipantViewSet(viewsets.ModelViewSet):
     queryset = ChatParticipant.objects.all()
     serializer_class = ChatParticipantSerializer
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=["Chat Participants"], operation_description="Retrieve all chat participants",
                          operation_id='ListChatParticipants')
@@ -135,10 +130,10 @@ class ChatParticipantViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_protect, name='dispatch')
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=["Messages"], operation_description="Retrieve all messages", operation_id='ListMessages')
     def list(self, request, *args, **kwargs):
@@ -166,10 +161,10 @@ class MessageViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_protect, name='dispatch')
 class MessageReadReceiptViewSet(viewsets.ModelViewSet):
     queryset = MessageReadReceipt.objects.all()
     serializer_class = MessageReadReceiptSerializer
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(tags=["Message Read Receipts"], operation_description="Retrieve all message read receipts",
                          operation_id='ListMessageReadReceipts')
