@@ -27,7 +27,6 @@ class UserRegistrationView(APIView):
             return Response({'detail': 'User created successfully'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@method_decorator(csrf_protect, name='dispatch')
 class UserLoginView(APIView):
     def post(self, request, *args, **kwargs):
         logger.debug(f"Login request received with data: {request.data}")
@@ -38,7 +37,6 @@ class UserLoginView(APIView):
         logger.debug(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -68,7 +66,6 @@ class UserViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class ChatViewSet(viewsets.ModelViewSet):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
@@ -98,7 +95,6 @@ class ChatViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class ChatParticipantViewSet(viewsets.ModelViewSet):
     queryset = ChatParticipant.objects.all()
     serializer_class = ChatParticipantSerializer
@@ -133,7 +129,6 @@ class ChatParticipantViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
@@ -164,7 +159,6 @@ class MessageViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
-@method_decorator(csrf_exempt, name='dispatch')
 class MessageReadReceiptViewSet(viewsets.ModelViewSet):
     queryset = MessageReadReceipt.objects.all()
     serializer_class = MessageReadReceiptSerializer
