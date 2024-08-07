@@ -1,5 +1,5 @@
 from django.utils.decorators import method_decorator
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie, csrf_protect
 from rest_framework import viewsets
 from drf_yasg.utils import swagger_auto_schema
 from .models import User, Chat, ChatParticipant, Message, MessageReadReceipt
@@ -8,8 +8,16 @@ from .serializers import UserSerializer, ChatSerializer, ChatParticipantSerializ
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializers import UserRegistrationSerializer
+from .serializers import UserRegistrationSerializer, UserLoginSerializer
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+import logging
 
+logger = logging.getLogger(__name__)
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({'csrfToken': get_token(request)})
 
 class UserRegistrationView(APIView):
     def post(self, request, *args, **kwargs):
@@ -17,6 +25,17 @@ class UserRegistrationView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             return Response({'detail': 'User created successfully'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@method_decorator(csrf_protect, name='dispatch')
+class UserLoginView(APIView):
+    def post(self, request, *args, **kwargs):
+        logger.debug(f"Login request received with data: {request.data}")
+        serializer = UserLoginSerializer(data=request.data)
+        if serializer.is_valid():
+            logger.debug("Serializer is valid.")
+            return Response(serializer.validated_data, status=status.HTTP_200_OK)
+        logger.debug(f"Serializer errors: {serializer.errors}")
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name='dispatch')
