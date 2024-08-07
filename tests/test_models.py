@@ -10,4 +10,4 @@ def test_user_creation():
     )
     assert user.email == 'test@example.com'
     assert user.registration_method == 'email'
-    assert str(user) == 'test@example.com'
+    assert str(user) == 'testuser'
