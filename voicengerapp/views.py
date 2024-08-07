@@ -1,9 +1,9 @@
+# views.py
 from rest_framework import viewsets, generics
+from rest_framework.exceptions import ValidationError
 from .models import User, Chat, ChatParticipant, Message, MessageReadReceipt, GroupChat, GroupChatParticipant, GroupChatFile, GroupChatLink
 from .serializers import UserSerializer, ChatSerializer, ChatParticipantSerializer, MessageSerializer, MessageReadReceiptSerializer, GroupChatSerializer, GroupChatParticipantSerializer, GroupChatFileSerializer, GroupChatLinkSerializer, RegisterSerializer, ProfileUpdateSerializer
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 
 # ViewSet для пользователей
 class UserViewSet(viewsets.ModelViewSet):
@@ -15,10 +15,22 @@ class ChatViewSet(viewsets.ModelViewSet):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
 
+    def perform_create(self, serializer):
+        chat = serializer.save()
+        if ChatParticipant.objects.filter(chat=chat).count() > 2:
+            chat.delete()
+            raise ValidationError("A chat can only have two participants.")
+
 # ViewSet для участников чатов
 class ChatParticipantViewSet(viewsets.ModelViewSet):
     queryset = ChatParticipant.objects.all()
     serializer_class = ChatParticipantSerializer
+
+    def perform_create(self, serializer):
+        chat = serializer.validated_data['chat']
+        if ChatParticipant.objects.filter(chat=chat).count() >= 2:
+            raise ValidationError("A chat can only have two participants.")
+        serializer.save()
 
 # ViewSet для сообщений
 class MessageViewSet(viewsets.ModelViewSet):

@@ -1,6 +1,6 @@
+# models.py
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-
 
 class User(AbstractUser):
     bio = models.TextField(blank=True)
@@ -28,15 +28,7 @@ class User(AbstractUser):
         verbose_name='user permissions',
     )
 
-
 class Chat(models.Model):
-    CHAT_TYPES = (
-        ('Private', 'Private'),
-        ('Group', 'Group'),
-        ('Anonim Group', 'Anonim Group'),
-        ('Channel', 'Channel')
-    )
-    chat_type = models.CharField(max_length=50, choices=CHAT_TYPES)
     chat_image = models.ImageField(upload_to='chat_images/', blank=True, null=True)
     description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -45,7 +37,6 @@ class Chat(models.Model):
     closed_at = models.DateTimeField(blank=True, null=True)
     last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, blank=True, null=True, related_name='chats')
 
-
 class ChatParticipant(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
@@ -53,6 +44,8 @@ class ChatParticipant(models.Model):
     is_admin = models.BooleanField(default=False)
     notifications_enabled = models.BooleanField(default=True)
 
+    class Meta:
+        unique_together = ('user', 'chat')
 
 class Message(models.Model):
     MESSAGE_TYPES = (
@@ -69,12 +62,10 @@ class Message(models.Model):
     sent_at = models.DateTimeField(auto_now_add=True)
     is_edited = models.BooleanField(default=False)
 
-
 class MessageReadReceipt(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE)
     chat_participant = models.ForeignKey(ChatParticipant, on_delete=models.CASCADE)
     read_at = models.DateTimeField(auto_now_add=True)
-
 
 class GroupChat(Chat):
     group_name = models.CharField(max_length=100)
@@ -83,11 +74,9 @@ class GroupChat(Chat):
     rules = models.TextField(blank=True)
     invite_link = models.URLField(blank=True, null=True)
 
-
 class GroupChatParticipant(ChatParticipant):
     is_muted = models.BooleanField(default=False)
     is_banned = models.BooleanField(default=False)
-
 
 class GroupChatFile(models.Model):
     FILE_TYPES = (
@@ -102,7 +91,6 @@ class GroupChatFile(models.Model):
     file = models.FileField(upload_to='group_files/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True)
-
 
 class GroupChatLink(models.Model):
     chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE)
