@@ -67,6 +67,7 @@ class ChatViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
 
+
 @method_decorator(csrf_exempt, name='dispatch')
 class ChatParticipantViewSet(viewsets.ModelViewSet):
     queryset = ChatParticipant.objects.all()
