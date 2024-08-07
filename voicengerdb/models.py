@@ -1,6 +1,5 @@
 from django.db import models
 
-
 class User(models.Model):
     username = models.CharField(max_length=100, unique=True)
     first_name = models.CharField(max_length=50, blank=True, null=True)
