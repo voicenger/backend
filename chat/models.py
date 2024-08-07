@@ -25,6 +25,7 @@ class GroupChat(models.Model):
         GroupChatParticipant.objects.create(chat=self, user=user)
 
 
+
 class GroupChatParticipant(models.Model):
     chat = models.ForeignKey(GroupChat, on_delete=models.CASCADE, related_name='participants')
     user = models.ForeignKey(User, on_delete=models.CASCADE)

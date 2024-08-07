@@ -21,7 +21,8 @@ class Chat(models.Model):
     updated_at = models.DateTimeField(auto_now_add=True)
     is_archived = models.BooleanField(default=False)
     closed_at = models.DateTimeField(blank=True, null=True)
-    last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True, related_name='last_message_in_chat')
+    last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='last_message_in_chat')
 
     def __str__(self):
         return f"{self.chat_type} Chat"
@@ -33,7 +34,6 @@ class ChatParticipant(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
     is_admin = models.BooleanField(default=False)
     notifications_enabled = models.BooleanField(default=True)
-
 
     def __str__(self):
         return f"{self.user.username} in {self.chat.id}"
