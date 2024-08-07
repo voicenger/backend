@@ -1,21 +1,5 @@
 from django.db import models
-
-class User(models.Model):
-    username = models.CharField(max_length=100, unique=True)
-    first_name = models.CharField(max_length=50, blank=True, null=True)
-    last_name = models.CharField(max_length=50, blank=True, null=True)
-    bio = models.TextField(blank=True, null=True)
-    profile_pictures = models.ImageField(upload_to='profile_pictures/', blank=True, null=True)
-    date_of_birth = models.DateTimeField(blank=True, null=True)
-    facebook_profile = models.URLField(blank=True, null=True)
-    notifications_enabled = models.BooleanField(default=True)
-    last_login_at = models.DateTimeField(blank=True, null=True)
-    is_online = models.BooleanField(default=True)
-    is_admin = models.BooleanField(default=True)
-
-    def __str__(self):
-        return self.username
-
+from authentication.models import User
 
 class Chat(models.Model):
     PRIVATE = 'Private'
@@ -37,7 +21,8 @@ class Chat(models.Model):
     updated_at = models.DateTimeField(auto_now_add=True)
     is_archived = models.BooleanField(default=False)
     closed_at = models.DateTimeField(blank=True, null=True)
-    last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True, related_name='last_message_in_chat')
+    last_message = models.ForeignKey('Message', on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='last_message_in_chat')
 
     def __str__(self):
         return f"{self.chat_type} Chat"
@@ -49,7 +34,6 @@ class ChatParticipant(models.Model):
     joined_at = models.DateTimeField(auto_now_add=True)
     is_admin = models.BooleanField(default=False)
     notifications_enabled = models.BooleanField(default=True)
-
 
     def __str__(self):
         return f"{self.user.username} in {self.chat.id}"

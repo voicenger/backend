@@ -3,8 +3,9 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import viewsets
 from drf_yasg.utils import swagger_auto_schema
 from .models import User, Chat, ChatParticipant, Message, MessageReadReceipt
-from .serializers import UserSerializer, ChatSerializer, ChatParticipantSerializer, MessageSerializer, \
+from .serializers import ChatSerializer, ChatParticipantSerializer, MessageSerializer, \
     MessageReadReceiptSerializer
+from authentication.serializers import UserSerializer
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -66,6 +67,7 @@ class ChatViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=["Chats"], operation_description="Delete a chat", operation_id='DeleteChat')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ChatParticipantViewSet(viewsets.ModelViewSet):

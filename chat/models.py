@@ -2,7 +2,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from voicengerdb.models import User
+from authentication.models import User
 
 
 class GroupChat(models.Model):
@@ -23,6 +23,7 @@ class GroupChat(models.Model):
         if self.participants.filter(user=user).exists():
             raise ValidationError("User is already a participant in this group chat.")
         GroupChatParticipant.objects.create(chat=self, user=user)
+
 
 
 class GroupChatParticipant(models.Model):
