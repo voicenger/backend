@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
+
 class User(AbstractUser):
     """
     Custom User model with additional fields for tracking registration method
@@ -20,10 +21,10 @@ class User(AbstractUser):
         choices=REGISTRATION_CHOICES,
         default='email'
     )
-    
+
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(null=True, blank=True)
-    
+
     def __str__(self):
         return self.email
 
@@ -31,6 +32,7 @@ class User(AbstractUser):
         ordering = ['-date_joined']
         verbose_name = _('user')
         verbose_name_plural = _('users')
+
 
 # Define the Profile model
 class Profile(models.Model):
@@ -45,10 +47,12 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
 
+
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(user=instance)
+
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):

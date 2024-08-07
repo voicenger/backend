@@ -65,3 +65,4 @@ class GroupChatLink(models.Model):
 
     def __str__(self):
         return f"Link for {self.chat.group_name}"
+

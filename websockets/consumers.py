@@ -92,3 +92,4 @@ class APIGatewayConsumer(AsyncWebsocketConsumer):
 #   },
 #   "method": "POST"
 # }
+

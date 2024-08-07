@@ -30,3 +30,4 @@ class MessageReadReceiptSerializer(serializers.ModelSerializer):
     class Meta:
         model = MessageReadReceipt
         fields = '__all__'
+

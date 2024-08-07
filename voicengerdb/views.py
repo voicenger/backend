@@ -168,3 +168,4 @@ class MessageReadReceiptViewSet(viewsets.ModelViewSet):
                          operation_id='DeleteMessageReadReceipt')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+

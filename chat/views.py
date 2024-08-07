@@ -119,3 +119,4 @@ class GroupChatLinkViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=["Group Chat Links"], operation_description="Delete a group chat link", operation_id='DeleteGroupChatLink')
     def destroy(self, request, *args, **kwargs):
         return super().destroy(request, *args, **kwargs)
+

@@ -24,3 +24,4 @@ class GroupChatLinkSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupChatLink
         fields = '__all__'
+
