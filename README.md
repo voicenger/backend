@@ -1,4 +1,5 @@
 # Backend
+[![volunteer](https://github.com/voicenger/backend/actions/workflows/python-test.yml/badge.svg)](https://github.com/voicenger/backend/blob/main/.github/workflows/python-test.yml) [![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/voicenger/backend/blob/main/LICENSE)
 
 All documentation is in the "docs" directory and online at [voicenger.docs](https://voicenger.github.io/backend/).
 
@@ -68,9 +69,9 @@ brew install docker-compose
 
 2. Docker-compose up/down
 ```docker
-docker compose -f "docker-compose.dev.yaml" up --build
+docker compose -f "docker-compose.dev.yml" up --build
 
-docker compose -f "docker-compose.dev.yaml" down
+docker compose -f "docker-compose.dev.yml" down
 ```
 
 # Production
@@ -82,8 +83,8 @@ docker compose -f "docker-compose.dev.yaml" down
 
 2. Docker-compose up/down
 ```docker
-docker compose -f "docker-compose.yaml" up --build
+docker compose -f "docker-compose.yml" up --build
 
-docker compose -f "docker-compose.yaml" down
+docker compose -f "docker-compose.yml" down
 ```
 
