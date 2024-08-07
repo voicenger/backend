@@ -51,16 +51,13 @@ class APIGatewayConsumer(AsyncWebsocketConsumer):
             await self.send(text_data=json.dumps({
                 'error': 'Invalid JSON'
             }))
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            await self.send(text_data=json.dumps({
-                'error': 'An unexpected error occurred',
-                'message': str(e)
-            }))
 
-    async def call_api(self, endpoint, data, method, headers):
+    async def call_api(self, endpoint, data, method, headers=None):
         async with httpx.AsyncClient() as client:
             try:
+                if headers is None:
+                    headers = {}
+
                 if method == 'GET':
                     response = await client.get(endpoint, params=data, headers=headers)
                 elif method == 'POST':
@@ -75,11 +72,15 @@ class APIGatewayConsumer(AsyncWebsocketConsumer):
                     return {"status": "error", "message": f"Unsupported method {method}"}
 
                 response.raise_for_status()
-                response_data = response.json() if response.content else {}
+                response_data = response.json()
                 return {"status": "success", "data": response_data}
             except httpx.HTTPStatusError as e:
                 print(f"HTTP error occurred: {e}")
-                return {"status": "error", "message": str(e)}
+                try:
+                    error_detail = e.response.json()
+                except ValueError:
+                    error_detail = e.response.text
+                return {"status": "error", "message": str(e), "detail": error_detail}
             except Exception as e:
                 print(f"An error occurred: {e}")
                 return {"status": "error", "message": "An internal error occurred"}
