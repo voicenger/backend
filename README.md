@@ -1,5 +1,3 @@
-# Project Setup Guide (Backend)
-
 Follow these steps to set up and run the project on your local machine.
 
 ## 1. Set up a Virtual Environment
@@ -39,8 +37,6 @@ Run the following command to apply database migrations:
 ```
 python manage.py migrate
 ```
-
-## 5. Start the Development Server
 
 ```
 python manage.py runserver
