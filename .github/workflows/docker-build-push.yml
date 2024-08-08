@@ -1,11 +1,8 @@
-name: Docker Build
+name: Docker Build linter
 
 on:
-  push:
-    tags: [ "*" ]
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+    types: [closed]
 
 env:
   SHA: ${{ github.event.pull_request.head.sha || github.event.after }}
@@ -13,6 +10,7 @@ env:
 
 jobs:
   Docker-build:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
