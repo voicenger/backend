@@ -73,17 +73,3 @@ docker compose -f "docker-compose.dev.yml" up --build
 
 docker compose -f "docker-compose.dev.yml" down
 ```
-
-# Production
- 
-1. Create .env.prod
-```shell
- cp .env.dev.example .env.prod
-```
-
-2. Docker-compose up/down
-```docker
-docker compose -f "docker-compose.yml" up --build
-
-docker compose -f "docker-compose.yml" down
-```
