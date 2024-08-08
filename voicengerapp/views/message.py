@@ -2,7 +2,7 @@ from rest_framework import viewsets
 from ..serializers import MessageSerializer, MessageReadReceiptSerializer
 from ..models import Message, MessageReadReceipt
 
-# ViewSet для сообщений
+# ViewSet для сообщений 
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
