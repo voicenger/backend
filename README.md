@@ -1,44 +1,89 @@
-Follow these steps to set up and run the project on your local machine.
+# Backend
+[![voicenger](https://github.com/voicenger/backend/actions/workflows/python-test.yml/badge.svg)](https://github.com/voicenger/backend/blob/main/.github/workflows/python-test.yml) [![Docker Build](https://github.com/voicenger/backend/actions/workflows/docker-build.yml/badge.svg)](https://github.com/voicenger/backend/actions/workflows/docker-build.yml) [![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/voicenger/backend/blob/main/LICENSE)
 
-## 1. Set up a Virtual Environment
+All documentation is in the "docs" directory and online at [voicenger.docs](https://voicenger.github.io/backend/).
 
-Create and activate a virtual environment:
-
-```sh
-python -m venv venv
-venv\Scripts\activate
-```
-## 2.Create a .env File
-Create a .env file in the root directory and add the following configurations:
-
-Create key
-```
-from django.core.management.utils import get_random_secret_key
-print(get_random_secret_key())
-```
-```
-SECRET_KEY=secret.key
-ALLOWED_HOSTS=127.0.0.1,localhost
-DJANGO_BASE_FRONTEND_URL=http://localhost:3000
-GOOGLE_OAUTH2_CLIENT_ID=your_google_oauth2_client_id
-GOOGLE_OAUTH2_CLIENT_SECRET=your_google_oauth2_client_secret
-```
-
-## 3. Install Dependencies
-Install all required packages from the requirements.txt file:
+Docs folders, install mdbook
 
 ```
-pip install -r requirements.txt
+brew install mdbook
 ```
 
-## 4. Apply Database Migrations
-Run the following command to apply database migrations:
+```dosc
+.
+├── SUMMARY.md
+├── aws.md
+├── chapter_1.md
+├── django.md
+└── docker.md
 
-```
-python manage.py migrate
+1 directory, 5 files
 ```
 
 ```
-python manage.py runserver
+cd /docs 
 ```
-Your project should now be up and running on http://127.0.0.1:8000.
+
+Run *mdbook serve*
+```
+mdbook serve       
+2024-08-06 15:03:08 [INFO] (mdbook::book): Book building has started
+2024-08-06 15:03:08 [INFO] (mdbook::book): Running the html backend
+2024-08-06 15:03:08 [INFO] (mdbook::cmd::serve): Serving on: http://localhost:3000
+2024-08-06 15:03:08 [INFO] (mdbook::cmd::watch::poller): Watching for changes...
+2024-08-06 15:03:08 [INFO] (warp::server): Server::run; addr=[::1]:3000
+2024-08-06 15:03:08 [INFO] (warp::server): listening on http://[::1]:3000
+```
+
+Linux
+
+1. Install Docker Linux all
+```docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+```
+
+1. docker-compose
+```docker
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.12.2/docker-compose-$(uname -s)-$(uname -m)"  -o /usr/local/bin/docker-compose
+sudo mv /usr/local/bin/docker-compose /usr/bin/docker-compose
+sudo chmod +x /usr/bin/docker-compose
+docker compose version
+```
+Mac
+
+1. Docker
+```docker
+brew install docker
+
+brew install docker-compose
+```
+
+
+# Development
+ 
+1. Create .env.dev
+```shell
+ cp .env.dev.example .env.dev
+```
+
+2. Docker-compose up/down
+```docker
+docker compose -f "docker-compose.dev.yml" up --build
+
+docker compose -f "docker-compose.dev.yml" down
+```
+
+# Production
+ 
+1. Create .env.prod
+```shell
+ cp .env.dev.example .env.prod
+```
+
+2. Docker-compose up/down
+```docker
+docker compose -f "docker-compose.yml" up --build
+
+docker compose -f "docker-compose.yml" down
+```
