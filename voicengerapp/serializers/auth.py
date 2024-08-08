@@ -1,9 +1,7 @@
 from rest_framework import serializers
-from .models import User, Chat, ChatParticipant, Message, MessageReadReceipt, GroupChat, GroupChatParticipant, \
-    GroupChatFile, GroupChatLink
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
-
+from ..models import User
 
 # Сериализатор для регистрации пользователей
 class RegisterSerializer(serializers.ModelSerializer):
@@ -70,66 +68,3 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         instance.is_active = validated_data.get('is_active', instance.is_active)
         instance.save()
         return instance
-
-
-# Сериализатор для пользователей
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
-
-
-# Сериализатор для чатов
-class ChatSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Chat
-        fields = '__all__'
-
-
-# Сериализатор для участников чатов
-class ChatParticipantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ChatParticipant
-        fields = '__all__'
-
-
-# Сериализатор для сообщений
-class MessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Message
-        fields = '__all__'
-
-
-# Сериализатор для квитанций о прочтении сообщений
-class MessageReadReceiptSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = MessageReadReceipt
-        fields = '__all__'
-
-
-# Сериализатор для групповых чатов
-class GroupChatSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GroupChat
-        fields = '__all__'
-
-
-# Сериализатор для участников групповых чатов
-class GroupChatParticipantSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GroupChatParticipant
-        fields = '__all__'
-
-
-# Сериализатор для файлов групповых чатов
-class GroupChatFileSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GroupChatFile
-        fields = '__all__'
-
-
-# Сериализатор для ссылок на групповые чаты
-class GroupChatLinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = GroupChatLink
-        fields = '__all__'
