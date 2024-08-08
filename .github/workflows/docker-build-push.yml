@@ -1,4 +1,4 @@
-name: Docker Build linter
+name: Docker Build Push
 
 on:
   pull_request:
@@ -9,7 +9,7 @@ env:
   COMPARE_TAG: latest
 
 jobs:
-  Docker-build:
+  Docker-build-push:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     permissions:
