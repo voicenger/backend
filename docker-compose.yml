@@ -13,27 +13,35 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - app:/app
+      - static_volume:/app/voicenger/static
+      - media_volume:/app/voicenger/media
     depends_on:
       - postgres
   nginx: 
     restart: unless-stopped
     container_name: nginx
-    image: voicengerapp/frontend:v0.1
-    # build:
-    #   context: .
-    #   dockerfile: ./docker/nginx/production/Dockerfile
+    build:
+      context: .
+      dockerfile: ./docker/nginx/production/Dockerfile
     ports:
       - 80:80
       - 443:443
-    # volumes:
-    #   - static_volume:/app/static
-    #   - media_volume:/app/media
-    #   - ./docker/nginx/production:/etc/nginx/conf.d
-    #   - ./docker/nginx/certbot/conf:/etc/letsencrypt
-    #   - ./docker/nginx/certbot/www:/var/www/certbot
+    volumes:
+      - static_volume:/app/voicenger/static
+      - media_volume:/app/voicenger/media
+      - ./docker/nginx/production:/etc/nginx/conf.d
+      - ./docker/nginx/certbot/conf:/etc/letsencrypt
+      - ./docker/nginx/certbot/www:/var/www/certbot
     depends_on: 
       - voicenger
+
+  certbot:
+    image: certbot/certbot
+    restart: unless-stopped
+    volumes:
+      - ./docker/nginx/certbot/conf:/etc/letsencrypt
+      - ./docker/nginx/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"   
 
   postgres:
     image: postgres:15
@@ -49,4 +57,6 @@ services:
 
 volumes:
   postgres_data:
-  app:
+  static_volume:
+  media_volume:
+  certbot:
