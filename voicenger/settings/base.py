@@ -29,6 +29,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', cast=Csv())
 
+CSRF_TRUSTED_ORIGINS=['http://voicenger:8000/','https://*.dmytroserbeniuk.uk']
+
 # Application definition
 
 INSTALLED_APPS = [
