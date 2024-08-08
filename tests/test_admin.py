@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.admin.sites import AdminSite
 from django.test import RequestFactory
 from unittest.mock import Mock
-from authentication.models import User
-from authentication.admin import UserAdmin
+from voicengerapp.models import User
+from voicengerapp.admin import UserAdmin
 
 User = get_user_model()
 

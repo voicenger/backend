@@ -1,5 +1,5 @@
 import pytest
-from authentication.models import User
+from voicengerapp.models import User
 
 @pytest.mark.django_db
 def test_user_creation():

@@ -2,7 +2,7 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 from unittest.mock import patch
-from authentication.models import User
+from voicengerapp.models import User
 
 @pytest.mark.django_db
 def test_google_login_existing_user():
