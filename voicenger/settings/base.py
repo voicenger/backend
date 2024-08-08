@@ -42,8 +42,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'voicengerapp',
-    'channels'
-
+    'channels',
+    'websocket',
 ]
 
 REST_FRAMEWORK = {
@@ -84,9 +84,11 @@ ASGI_APPLICATION = 'voicenger.asgi.application'
 
 WSGI_APPLICATION = 'voicenger.wsgi.application'
 
+#For WebSockets
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    'default': {
+
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
     },
 }
 

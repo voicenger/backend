@@ -2,8 +2,17 @@ import os
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from channels.auth import AuthMiddlewareStack
-from channels.security.websocket import AllowedHostsOriginValidator
+import websocket
+from websocket import routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'voicenger.settings.development')
 
-application = ProtocolTypeRouter()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter(
+
+            websocket.routing.websocket_urlpatterns
+        )
+    ),
+})
