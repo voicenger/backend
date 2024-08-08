@@ -44,7 +44,7 @@ pytz==2024.1
 PyYAML==6.0.2
 requests==2.32.3
 s3transfer==0.10.2
-setuptools==72.1.0
+setuptools==66.1.1
 six==1.16.0
 sqlparse==0.5.1
 tomli==2.0.1
