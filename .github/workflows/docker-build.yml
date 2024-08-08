@@ -7,16 +7,6 @@ on:
   pull_request:
     branches: [ main ]
 
-permissions:
-  id-token: write
-  contents: write
-  pull-requests: write
-  issues: write
-  statuses: write
-  security-events: write
-  actions: read
-  attestations: write
-
 env:
   SHA: ${{ github.event.pull_request.head.sha || github.event.after }}
   COMPARE_TAG: latest
@@ -28,6 +18,8 @@ jobs:
       contents: read
       packages: write
       pull-requests: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Checkout repository
