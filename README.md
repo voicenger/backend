@@ -1,5 +1,5 @@
 # Backend
-[![volunteer](https://github.com/voicenger/backend/actions/workflows/python-test.yml/badge.svg)](https://github.com/voicenger/backend/blob/main/.github/workflows/python-test.yml) [![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/voicenger/backend/blob/main/LICENSE)
+[![voicenger](https://github.com/voicenger/backend/actions/workflows/python-test.yml/badge.svg)](https://github.com/voicenger/backend/blob/main/.github/workflows/python-test.yml) [![Docker Build](https://github.com/voicenger/backend/actions/workflows/docker-build.yml/badge.svg)](https://github.com/voicenger/backend/actions/workflows/docker-build.yml) [![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/voicenger/backend/blob/main/LICENSE)
 
 All documentation is in the "docs" directory and online at [voicenger.docs](https://voicenger.github.io/backend/).
 

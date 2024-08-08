@@ -6,6 +6,7 @@ This document provides a brief overview of how to work with AWS services for you
 
 ## AWS Services Used
 
+
 ### Amazon EC2
 
 - **Purpose**: Provides scalable virtual servers.
