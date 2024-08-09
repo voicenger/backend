@@ -50,3 +50,19 @@ def test_validate_bio_valid_length():
         'password': 'validpassword123'
     })
     assert serializer.is_valid()
+
+
+@pytest.mark.django_db
+def test_validate_username_already_exist():
+    # Тест проверяет, что username является уникальным
+    User.objects.create(username='exist_user', email='exist_user@gmail.com', password='password123')
+    serializer = UserSerializer(data={
+        'username': 'exist_user',
+        'email': 'new_email@gmail.com',
+        'password': 'password123'
+    })
+
+    # Проверяем, что сериализатор не валиден и вызывает ошибку с кодом 'unique'
+    assert not serializer.is_valid()
+    assert 'username' in serializer.errors
+    assert serializer.errors['username'][0].code == 'unique'

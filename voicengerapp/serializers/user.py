@@ -44,3 +44,8 @@ class UserSerializer(serializers.ModelSerializer):
         if value and len(value) > 500:
             raise serializers.ValidationError("Bio cannot be longer than 500 characters.")
         return value
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("A user with this username already exist.")
+        return value
