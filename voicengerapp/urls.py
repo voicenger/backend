@@ -4,8 +4,10 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from .views.auth0 import index, profile, logout
 from .views import UserViewSet, ChatViewSet, ChatParticipantViewSet, MessageViewSet, MessageReadReceiptViewSet, GroupChatViewSet, GroupChatParticipantViewSet, GroupChatFileViewSet, GroupChatLinkViewSet, ProfileUpdateView
 from rest_framework.permissions import AllowAny
+
 
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
@@ -38,4 +40,8 @@ urlpatterns = [
     path('api/profile/', ProfileUpdateView.as_view(), name='profile_update'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+    path('app/', index, name='index',),
+    path('app/profile/', profile, name='profile',),
+    path('app/',include('social_django.urls')),
+    path('app/logout/', logout,name='logout'),
 ]

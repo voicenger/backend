@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voicenger Auth</title>
+</head>
+<body>
+    <header>
+        {% if user.is_authenticated %}
+            <a href="/api/app/logout">Log Out</a>
+            <a href="/api/app/profile">Profile</a>
+        {% else %}
+            <a href="/api/app/login/auth0">Login</a>
+        {% endif %}
+    </header>
+    {% block body %}
+
+    {% endblock body %}
+</body>
+</html>
