@@ -10,6 +10,9 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 # ViewSet для квитанций о прочтении сообщений
 class MessageReadReceiptViewSet(viewsets.ModelViewSet):
     queryset = MessageReadReceipt.objects.all()
