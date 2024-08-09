@@ -2,6 +2,28 @@ from rest_framework import serializers
 from ..models import User
 from datetime import datetime
 
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    password2 = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password', 'password2', 'bio', 'profile_picture', 'date_of_birth', 'facebook_profile']
+
+    def validate(self, data):
+        # Проверка совпадения паролей
+        if data['password'] != data['password2']:
+            raise serializers.ValidationError("Passwords do not match.")
+        return data
+
+    def create(self, validated_data):
+        # Удаляем поле password2, оно не нужно для создания пользователя
+        validated_data.pop('password2')
+        # Создаем пользователя, используя метод create_user, который хеширует пароль
+        user = User.objects.create_user(**validated_data)
+        return user
+
 # Сериализатор для пользователей
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
