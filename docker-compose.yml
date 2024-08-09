@@ -1,10 +1,11 @@
 services:
   voicenger:
-    build:
-      context: .
-      target: prod
-      args:
-        ENV: prod
+    image: voicengerapp/backend:0d0b466
+    # build:
+    #   context: .
+    #   target: prod
+    #   args:
+    #     ENV: prod
     container_name: voicenger
     restart: unless-stopped
     env_file: .env.prod
