@@ -2,4 +2,10 @@
 {% block body %}
     <img src="{{auth0_user.extra_data.picture}}" alt="image" width="50">
     {{user_data}}
+    <h2>JWT Token</h2>
+    <p><strong>Access Token:</strong> {{ jwt_token }}</p>
+    
+    {% if refresh_token %}
+    <p><strong>Refresh Token:</strong> {{ refresh_token }}</p>
+    {% endif %}
 {% endblock body %}
