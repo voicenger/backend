@@ -1,0 +1,13 @@
+{
+    "separate-pull-requests": true,
+    "release-search-depth": 10,
+    "commit-search-depth": 100,
+    "sequential-calls": true,
+    "bump-minor-pre-major": true,
+    "bump-patch-for-minor-pre-major": true,
+    "draft": false,
+    "prerelease": false,
+    "release-type": "simple",
+    "package-name": "backend"
+  }
+  
