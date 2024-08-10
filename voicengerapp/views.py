@@ -1,7 +1,8 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, generics
+from rest_framework.permissions import AllowAny
 
 from .models import Chat, Message, UserChat
-from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer
+from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer
 
 
 class ChatViewSet(viewsets.ModelViewSet):
@@ -17,3 +18,9 @@ class MessageViewSet(viewsets.ModelViewSet):
 class UserChatViewSet(viewsets.ModelViewSet):
     queryset = UserChat.objects.all()
     serializer_class = UserChatSerializer
+
+
+class RegisterView(generics.CreateAPIView):
+    queryset = UserChat.objects.all()
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
