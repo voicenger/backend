@@ -50,9 +50,9 @@ INSTALLED_APPS = [
 ]
 
 SOCIAL_AUTH_TRAILING_SLASH=False
-SOCIAL_AUTH_AUTH0_DOMAIN = config('APP_DOMAIN', default='dev-m4yp61l880yrkjnn.us.auth0.com')
-SOCIAL_AUTH_AUTH0_KEY=config('APP_CLIENT_ID')
-SOCIAL_AUTH_AUTH0_SECRET=config('APP_CLIENT_SECRET')
+SOCIAL_AUTH_AUTH0_DOMAIN = config('APP_DOMAIN', default='auth0.com')
+SOCIAL_AUTH_AUTH0_KEY=config('APP_CLIENT_ID', default='auth0.com') 
+SOCIAL_AUTH_AUTH0_SECRET=config('APP_CLIENT_SECRET', default='auth0.com')
 
 SOCIAL_AUTH_AUTH0_SCOPE=[
     'openid',
