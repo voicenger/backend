@@ -60,7 +60,7 @@ def get_jwt_token():
 
     response = requests.post(url, json=data, headers=headers)
     
-    # Добавляем вывод результата запроса на консоль
+    # Добавляем вывод результата запроса на консоль 
     print("Auth0 Response:", response.json())
     
     return response.json().get('access_token')
