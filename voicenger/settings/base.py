@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_yasg',
     'voicengerapp',
-
+    'channels',
 ]
 
 REST_FRAMEWORK = {
@@ -90,6 +90,15 @@ TEMPLATES = [
 ASGI_APPLICATION = 'voicenger.asgi.application'
 
 WSGI_APPLICATION = 'voicenger.wsgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 
 MEDIA_URL = '/media/'
