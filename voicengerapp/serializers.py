@@ -9,6 +9,11 @@ class ChatSerializer(serializers.ModelSerializer):
         model = Chat
         fields = ['id', 'participants', 'created_at', 'updated_at']
 
+    def validate_participants(self, participants):
+        if len(participants) == 2:
+            raise serializers.ValidationError("A chat should have exactly two participants")
+        return participants
+
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.CharField(source='sender.username', read_only=True)
