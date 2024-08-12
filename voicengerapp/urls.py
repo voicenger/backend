@@ -2,6 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
+from . import views
 from .views import ChatViewSet, MessageViewSet, UserChatViewSet, RegisterView, index, logout, profile
 
 router = DefaultRouter()
@@ -18,4 +19,5 @@ urlpatterns = [
     path('app/profile/',profile,name='profile'),
     path('app/',include('social_django.urls')),
     path('app/logout/',logout,name='logout'),
+    path('api/profile/<str:username>/', views.user_profile, name='user_profile'),
 ]
