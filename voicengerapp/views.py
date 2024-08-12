@@ -59,6 +59,13 @@ class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        # Получаем все чаты, в которых состоит текущий пользователь
+        user_chats = Chat.objects.filter(participants=user)
+        # Возвращаем только те сообщения, которые принадлежат этим чатам
+        return Message.objects.filter(chat__in=user_chats)
+
 
 
 class UserChatViewSet(viewsets.ModelViewSet):
