@@ -14,6 +14,11 @@ class ChatSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("A chat should have exactly two participants")
         return participants
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['participants'] = [{'id': p.id, 'username': p.username} for p in instance.participants.all()]
+        return representation
+
 
 class MessageSerializer(serializers.ModelSerializer):
     sender_username = serializers.CharField(source='sender.username', read_only=True)
