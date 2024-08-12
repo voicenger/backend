@@ -17,6 +17,15 @@ class MessageSerializer(serializers.ModelSerializer):
         model = Message
         fields = ['id', 'chat', 'sender', 'sender_username', 'text', 'timestamp', 'is_read']
 
+    def validate(self, data):
+        chat = data.get('chat', None)
+        sender = data.get('sender', None)
+
+        if chat and sender and sender not in chat.participants:
+            raise serializers.ValidationError("The sender is not a participant of the chat.")
+
+        return data
+
 
 class UserChatSerializer(serializers.ModelSerializer):
     class Meta:
@@ -25,11 +34,14 @@ class UserChatSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True)
+    password = serializers.CharField(write_only=True, required=True, min_length=8)
 
     class Meta:
         model = User
         fields = ('username', 'password', 'email', 'first_name', 'last_name')
+        extra_kwargs = {
+            'username': {'min_length': 4},
+        }
 
     def create(self, validated_data):
         user = User.objects.create_user(
