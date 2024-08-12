@@ -26,6 +26,12 @@ class MessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = Message
         fields = ['id', 'chat', 'sender', 'sender_username', 'text', 'timestamp', 'is_read']
+        read_only_fields = ['sender']
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        validated_data['sender'] = user
+        return super(MessageSerializer, self).create(validated_data)
 
     def validate(self, data):
         chat = data.get('chat', None)
