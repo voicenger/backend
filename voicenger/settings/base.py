@@ -176,3 +176,11 @@ SOCIAL_AUTH_AUTH0_SCOPE = [
 LOGIN_URL = '/login/auth0'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
