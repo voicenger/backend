@@ -44,9 +44,10 @@ class MessageSerializer(serializers.ModelSerializer):
 
 
 class UserChatSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
     class Meta:
         model = UserChat
-        fields = ['user', 'chat', 'last_read_message']
+        fields = ['user', 'username', 'chat', 'last_read_message']
 
 
 class RegisterSerializer(serializers.ModelSerializer):
