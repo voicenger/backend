@@ -1,6 +1,6 @@
 from rest_framework import viewsets, generics
 from rest_framework.permissions import AllowAny, IsAuthenticated
-
+from rest_framework.exceptions import NotAuthenticated
 from .models import Chat, Message, UserChat
 from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer
 
@@ -60,12 +60,15 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        # Получаем все чаты, в которых состоит текущий пользователь
-        user_chats = Chat.objects.filter(participants=user)
-        # Возвращаем только те сообщения, которые принадлежат этим чатам
-        return Message.objects.filter(chat__in=user_chats)
+        if getattr(self, 'swagger_fake_view', False):
+            return Message.objects.none()
 
+        user = self.request.user
+        if not user.is_authenticated:
+            raise NotAuthenticated("You must be authenticated to view this content.")
+
+        user_chats = Chat.objects.filter(participants=user)
+        return Message.objects.filter(chat__in=user_chats)
 
 
 class UserChatViewSet(viewsets.ModelViewSet):
