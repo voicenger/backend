@@ -53,6 +53,10 @@ class ChatViewSet(viewsets.ModelViewSet):
     serializer_class = ChatSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        user = self.request.user
+        return Chat.objects.filter(participants=user)
+
 
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
@@ -75,6 +79,10 @@ class UserChatViewSet(viewsets.ModelViewSet):
     queryset = UserChat.objects.all()
     serializer_class = UserChatSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return UserChat.objects.filter(user=user)
 
 
 class RegisterView(generics.CreateAPIView):
