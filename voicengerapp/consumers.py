@@ -15,7 +15,7 @@ class Token(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         request = json.loads(text_data)
 
-        method = request.get('method', 'GET')
+        method = request.get('method', 'GET').lower()
         url = request.get('url')
         headers = request.get('headers', {})
         data = request.get('data', None)
@@ -24,7 +24,7 @@ class Token(AsyncWebsocketConsumer):
         full_url = f'{settings.API_BASE_URL}{url}'
 
         # Ограничение на метод POST
-        if method != 'POST':
+        if method != 'post':
             response_data = {
                 "error": "Only POST method is allowed for this endpoint"
             }
