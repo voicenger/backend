@@ -44,11 +44,12 @@ INSTALLED_APPS = [
     'voicengerapp',
     'channels',
     'social_django',
+    "corsheaders",
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'voicengerapp.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -69,6 +70,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'voicengerapp.middleware.Auth0TokenMiddleware',
 ]
 
 ROOT_URLCONF = 'voicenger.urls'
@@ -149,18 +152,26 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     ]
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
-    'TOKEN_TYPE_CLAIM': 'token_type',
-}
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+#     'ROTATE_REFRESH_TOKENS': False,
+#     'BLACKLIST_AFTER_ROTATION': True,
+#     'ALGORITHM': 'HS256',
+#     'SIGNING_KEY': SECRET_KEY,
+#     'VERIFYING_KEY': None,
+#     'AUTH_HEADER_TYPES': ('Bearer',),
+#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+#     'TOKEN_TYPE_CLAIM': 'token_type',
+# }
+
+
+AUTH0_DOMAIN = config('APP_DOMAIN')
+API_IDENTIFIER = config('APP_AUDIENCE')
+PUBLIC_KEY = None
+JWT_ISSUER = f'https://{AUTH0_DOMAIN}/'
+JWT_AUDIENCE = API_IDENTIFIER
+
 
 SOCIAL_AUTH_TRAILING_SLASH = False
 SOCIAL_AUTH_AUTH0_DOMAIN = config('APP_DOMAIN')
@@ -174,7 +185,7 @@ SOCIAL_AUTH_AUTH0_SCOPE = [
 ]
 
 LOGIN_URL = '/login/auth0'
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/auth0/callback/'
 LOGOUT_REDIRECT_URL = '/'
 
 DATABASES = {
