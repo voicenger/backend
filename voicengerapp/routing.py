@@ -1,7 +1,9 @@
+# routing.py
+
 from django.urls import re_path
 
-from .consumers import UserMessageConsumer
+from .consumers import Token
 
 websocket_urlpatterns = [
-    re_path(r'ws/universal/$', UserMessageConsumer.as_asgi()),
+    re_path(r'ws/token/$', Token.as_asgi()),
 ]
