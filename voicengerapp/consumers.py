@@ -1,15 +1,11 @@
 import json
 
+import httpx
 from channels.generic.websocket import AsyncWebsocketConsumer
-
-MESSAGE_CREATION_COMMAND = 'create_message'
-USER_INFO_COMMAND = 'get_user'
-MESSAGE_CREATED_RESPONSE = 'message_created'
-USER_INFO_RESPONSE = 'user_info'
-DATA_KEY = 'data'
+from django.conf import settings
 
 
-class UserMessageConsumer(AsyncWebsocketConsumer):
+class Token(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
 
@@ -17,27 +13,35 @@ class UserMessageConsumer(AsyncWebsocketConsumer):
         pass
 
     async def receive(self, text_data):
-        data = json.loads(text_data)
-        command = data.get('type')
+        request = json.loads(text_data)
 
-        if command == MESSAGE_CREATION_COMMAND:
-            await self.create_message(data[DATA_KEY])
-        elif command == USER_INFO_COMMAND:
-            await self.get_user_info(data[DATA_KEY])
+        method = request.get('method', 'GET')
+        url = request.get('url')
+        headers = request.get('headers', {})
+        data = request.get('data', None)
 
-    async def create_message(self, data):
-        message = self.generate_response(data, ['message_id', 'chat_id', 'text', 'timestamp'])
-        await self._send_response(MESSAGE_CREATED_RESPONSE, message)
+        # Формирование полного URL
+        full_url = f'{settings.API_BASE_URL}{url}'
 
-    async def get_user_info(self, data):
-        user_info = self.generate_response(data, ['user_id', 'username', 'email'])
-        await self._send_response(USER_INFO_RESPONSE, user_info)
+        # Ограничение на метод POST
+        if method != 'POST':
+            response_data = {
+                "error": "Only POST method is allowed for this endpoint"
+            }
+            await self._send_response(response_data)
+            return
 
-    def generate_response(self, data, keys):
-        return {key: data.get(key, '') for key in keys}
+        async with httpx.AsyncClient() as client:
+            response = await client.post(full_url, json=data, headers=headers)
 
-    async def _send_response(self, type_, data):
-        await self.send(text_data=json.dumps({
-            'type': type_,
-            'data': data
-        }))
+            response_data = {
+                "status_code": response.status_code,
+                "data": response.json()
+            } if response else {
+                "error": "Failed to perform the request"
+            }
+
+            await self._send_response(response_data)
+
+    async def _send_response(self, data):
+        await self.send(text_data=json.dumps(data))
