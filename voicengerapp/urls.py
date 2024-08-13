@@ -18,4 +18,5 @@ urlpatterns = [
     path('app/profile/',profile,name='profile'),
     path('app/',include('social_django.urls')),
     path('app/logout/',logout,name='logout'),
+    path('messages/chat/<int:id>/', MessageViewSet.as_view({'get': 'user_chat_messages'}), name='user_chat_messages'),
 ]

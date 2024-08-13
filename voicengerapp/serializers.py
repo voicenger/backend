@@ -48,6 +48,7 @@ class UserChatSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserChat
         fields = ['user', 'username', 'chat', 'last_read_message']
+        read_only_fields = ['user']
 
 
 class RegisterSerializer(serializers.ModelSerializer):
