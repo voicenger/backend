@@ -1,14 +1,16 @@
+import json
+
+from decouple import config
+from django.contrib.auth import logout as django_logout
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from rest_framework import viewsets, generics
-from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import NotAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
 from .models import Chat, Message, UserChat
 from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer
 
-from django.shortcuts import render
-from django.contrib.auth import logout as django_logout
-from django.http import HttpResponseRedirect
-from decouple import config
-import json
 
 # Create your views here.
 
@@ -48,13 +50,20 @@ def logout(request):
 
     return HttpResponseRedirect(f"https://{domain}/v2/logout?client_id={client_id}&returnTo={return_to}")
 
+
 class ChatViewSet(viewsets.ModelViewSet):
     queryset = Chat.objects.all()
     serializer_class = ChatSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Chat.objects.none()
+
         user = self.request.user
+        if not user.is_authenticated:
+            raise NotAuthenticated("You must be authenticated to view this content.")
+
         return Chat.objects.filter(participants=user)
 
 
@@ -81,7 +90,13 @@ class UserChatViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return UserChat.objects.none()
+
         user = self.request.user
+        if not user.is_authenticated:
+            raise NotAuthenticated("You must be authenticated to view this content.")
+
         return UserChat.objects.filter(user=user)
 
 
