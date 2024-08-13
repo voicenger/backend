@@ -4,9 +4,11 @@ from decouple import config
 from django.contrib.auth import logout as django_logout
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from rest_framework import status
 from rest_framework import viewsets, generics
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
 from .models import Chat, Message, UserChat
 from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer
@@ -82,6 +84,13 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         user_chats = Chat.objects.filter(participants=user)
         return Message.objects.filter(chat__in=user_chats)
+
+    # Returns the current user's messages in a specific chat (by chat ID).
+    def user_chat_messages(self, request, id=None):
+        chat_id = id
+        messages = Message.objects.filter(chat_id=chat_id)
+        serializer = self.get_serializer(messages, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserChatViewSet(viewsets.ModelViewSet):
