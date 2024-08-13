@@ -165,13 +165,6 @@ CORS_ALLOWED_ORIGINS = [
 #     'TOKEN_TYPE_CLAIM': 'token_type',
 # }
 
-# SIMPLE_JWT = {
-#     'ALGORITHM': 'RS256',
-#     'VERIFYING_KEY': 'KbBNx2MGrxhkmzqn0LMkp6W5oXomLtgc',
-#     'AUDIENCE': 'https://dev-m4yp61l880yrkjnn.us.auth0.com/api/v2/',
-#     'ISSUER': 'https://dev-m4yp61l880yrkjnn.us.auth0.com/',
-#     'AUTH_HEADER_TYPES': ('Bearer',),
-# }
 
 AUTH0_DOMAIN = config('APP_DOMAIN')
 API_IDENTIFIER = config('APP_AUDIENCE')
