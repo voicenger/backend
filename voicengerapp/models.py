@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 
 User = get_user_model()
@@ -11,20 +12,24 @@ class Chat(models.Model):
     A class representing a chat session in the application.
 
     Attributes:
+    - name (CharField): A field representing the name of the chat.
     - participants (ManyToManyField): A field representing the participants in the chat session.
     - created_at (DateTimeField): A field representing the date and time when the chat session was created.
     - updated_at (DateTimeField): A field representing the date and time when the chat session was last updated.
 
     Methods:
     - __str__(): Returns a string representation of the chat session.
+    - save(self, *args, **kwargs): Automatically sets the chat name if it's not provided.
 
     """
+    name = models.CharField(max_length=255, blank=True, null=True, default='NewChat')
     participants = models.ManyToManyField(User, through='UserChat')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Chat {self.id}"
+        return self.name or f"Chat {self.id}"
+
 
 
 class Message(models.Model):
@@ -70,8 +75,11 @@ class UserChat(models.Model):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     last_read_message = models.ForeignKey(Message, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
 
-    class Meta:
-        unique_together = ('user', 'chat')
+    def clean(self):
+        super().clean()
+        if UserChat.objects.filter(chat=self.chat).count() >= 2:
+            raise ValidationError("This chat already has two participants.")
 
-    def __str__(self):
-        return f"UserChat: {self.user.username} in chat {self.chat.id}"
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
