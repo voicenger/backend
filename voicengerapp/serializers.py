@@ -7,7 +7,7 @@ from .models import Chat, Message, UserChat
 class ChatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Chat
-        fields = ['id', 'participants', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'participants', 'created_at', 'updated_at']
 
     def validate_participants(self, participants):
         if len(participants) != 2:
@@ -16,6 +16,8 @@ class ChatSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        if not instance.name:
+            representation['name'] = " & ".join([p.username for p in instance.participants.all()])
         representation['participants'] = [{'id': p.id, 'username': p.username} for p in instance.participants.all()]
         return representation
 

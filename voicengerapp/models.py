@@ -12,20 +12,24 @@ class Chat(models.Model):
     A class representing a chat session in the application.
 
     Attributes:
+    - name (CharField): A field representing the name of the chat.
     - participants (ManyToManyField): A field representing the participants in the chat session.
     - created_at (DateTimeField): A field representing the date and time when the chat session was created.
     - updated_at (DateTimeField): A field representing the date and time when the chat session was last updated.
 
     Methods:
     - __str__(): Returns a string representation of the chat session.
+    - save(self, *args, **kwargs): Automatically sets the chat name if it's not provided.
 
     """
+    name = models.CharField(max_length=255, blank=True, null=True, default='NewChat')
     participants = models.ManyToManyField(User, through='UserChat')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Chat {self.id}"
+        return self.name or f"Chat {self.id}"
+
 
 
 class Message(models.Model):
