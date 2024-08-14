@@ -10,14 +10,15 @@ class ChatSerializer(serializers.ModelSerializer):
         fields = ['id', 'participants', 'created_at', 'updated_at']
 
     def validate_participants(self, participants):
-        if len(participants) == 2:
-            raise serializers.ValidationError("A chat should have exactly two participants")
+        if len(participants) != 2:
+            raise serializers.ValidationError("A chat must have exactly two participants.")
         return participants
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['participants'] = [{'id': p.id, 'username': p.username} for p in instance.participants.all()]
         return representation
+
 
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -45,11 +46,16 @@ class MessageSerializer(serializers.ModelSerializer):
 
 class UserChatSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
+
     class Meta:
         model = UserChat
         fields = ['user', 'username', 'chat', 'last_read_message']
         read_only_fields = ['user']
 
+    def create(self, validated_data):
+        if UserChat.objects.filter(chat=validated_data['chat']).count() >= 2:
+            raise serializers.ValidationError("This chat already has two participants.")
+        return super().create(validated_data)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, min_length=8)

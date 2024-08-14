@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 
 User = get_user_model()
@@ -70,8 +71,11 @@ class UserChat(models.Model):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE)
     last_read_message = models.ForeignKey(Message, null=True, blank=True, on_delete=models.SET_NULL, related_name='+')
 
-    class Meta:
-        unique_together = ('user', 'chat')
+    def clean(self):
+        super().clean()
+        if UserChat.objects.filter(chat=self.chat).count() >= 2:
+            raise ValidationError("This chat already has two participants.")
 
-    def __str__(self):
-        return f"UserChat: {self.user.username} in chat {self.chat.id}"
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
