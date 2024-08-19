@@ -1,10 +1,14 @@
 from django.contrib.auth.models import User
+from django.utils import timezone
 from rest_framework import serializers
 
 from .models import Chat, Message, UserChat
 
 
 class ChatSerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(required=False, default=timezone.now)
+    updated_at = serializers.DateTimeField(required=False, default=timezone.now)
+
     class Meta:
         model = Chat
         fields = ['id', 'name', 'participants', 'created_at', 'updated_at']
@@ -44,6 +48,13 @@ class MessageSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("The sender is not a participant of the chat.")
 
         return data
+
+
+class MessageSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
+        fields = ['id', 'sender', 'text', 'timestamp']
+        read_only_fields = ['sender']
 
 
 class UserChatSerializer(serializers.ModelSerializer):
