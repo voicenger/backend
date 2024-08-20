@@ -127,33 +127,45 @@ class ChatConsumer(AsyncWebsocketConsumer):
         last_read_message_id = data.get('last_read_message', None)
 
         user = self.scope["user"]
+        try:
+            chat = await self.get_chat(chat_id=chat_id)
+            if chat is None:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Chat not found'
+                }))
+                return
 
-        chat = await self.get_chat(chat_id)
-        if chat is None:
+            is_participant = await self.is_user_in_chat(user=user, chat=chat)
+            if is_participant:
+                await self.send(text_data=json.dumps({
+                    'type': 'info',
+                    'message': 'You are already in the chat'
+                }))
+                return
+
+            try:
+                await self.add_participants_to_chat(chat_id=chat_id, participants_ids=[user.id])
+            except Exception as e:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': f'Failed to join the chat: {str(e)}'
+                }))
+                return
+            last_message_id = await self.get_last_message(chat_id=chat_id)
+            message = JoinChatMessage(
+                chat_id=chat_id,
+                last_read_message=last_read_message_id or last_message_id,
+                user=user
+            )
+            await self.send(text_data=json.dumps(message.to_dict()))
+
+        except Exception as e:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': 'Chat not found'
+                'message': f'An unexpected error occurred: {str(e)}'
             }))
-            return
 
-        is_participant = await self.is_user_in_chat(user=user, chat=chat)
-        if is_participant:
-            await self.send(text_data=json.dumps({
-                'type': 'info',
-                'message': 'You are already in the chat'
-            }))
-            return
-
-        await self.add_participants_to_chat(chat_id=chat_id, participants_ids=[user.id])
-
-        last_message_data = await self.get_last_message(chat_id=chat_id)
-
-        message = JoinChatMessage(
-            chat_id=chat_id,
-            last_read_message=last_read_message_id if last_read_message_id else None,
-            last_message=last_message_data
-        )
-        await self.send(text_data=json.dumps(message.to_dict()))
 
     @database_sync_to_async
     def get_all_chats(self):
@@ -219,11 +231,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def get_last_message(self, chat_id):
         from voicengerapp.models import Message
-        from voicengerapp.serializers import MessageSummarySerializer
-
         try:
-            message = Message.objects.filter(chat_id=chat_id).latest('timestamp')
-            serializer = MessageSummarySerializer(message)
-            return serializer.data
+            last_message = Message.objects.filter(chat_id=chat_id).latest('timestamp')
+            return last_message.id
         except Message.DoesNotExist:
             return None

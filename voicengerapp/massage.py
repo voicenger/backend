@@ -39,12 +39,14 @@ class CreateEmptyChatMessage(BaseMessage):
 
 
 class JoinChatMessage(BaseMessage):
-    def __init__(self, chat_id: int, last_read_message=None, last_message=None):
+    def __init__(self, chat_id: int, user=None, last_read_message=None):
         data = {
-            "chat": chat_id
+            "chat": chat_id,
+            "user": {
+                "id": user.id,
+                "username": user.username
+            }
         }
         if last_read_message is not None:
             data["last_read_message"] = last_read_message
-        if last_message is not None:
-            data["last_message"] = last_message
-        super().__init__("joinChat", data)
+        super().__init__("chatJoined", data)

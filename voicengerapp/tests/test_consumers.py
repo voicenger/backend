@@ -131,19 +131,19 @@ async def test_join_chat():
     await database_sync_to_async(chat.participants.add)(user1)
 
     # Create a message in the chat
-    await database_sync_to_async(Message.objects.create)(
+    last_message = await database_sync_to_async(Message.objects.create)(
         chat=chat,
         sender=user1,
         text='Hello World!'
     )
 
-    # Set up WebSocket communication and authenticate the second user
+    # Set up WebSocket and authenticate the second user
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
     communicator.scope['user'] = user2
     connected, _ = await communicator.connect()
     assert connected
 
-    # Data for joining the chat
+    # Data to join the chat
     join_chat_data = {
         'command': 'joinChat',
         'chat_id': chat.id,
@@ -153,24 +153,22 @@ async def test_join_chat():
     await communicator.send_json_to(join_chat_data)
     response = await communicator.receive_json_from()
 
-    # Check if the response type is 'joinChat'
-    assert response['type'] == 'joinChat'
+    # Check the type of response
+    assert response['type'] == 'chatJoined'
 
-    # Ensure 'data' key is in the response and contains the expected fields
+    # Check the presence of 'data' in the response and its contents
     assert 'data' in response
     assert 'chat' in response['data']
-    assert 'last_message' in response['data']
+    assert 'user' in response['data']
+    assert 'last_read_message' in response['data']
     assert response['data']['chat'] == chat.id
-    assert 'last_read_message' not in response['data']
+    assert response['data']['user']['id'] == user2.id
+    assert response['data']['user']['username'] == user2.username
 
-    # Verify the last message details
-    last_message = response['data']['last_message']
-    assert last_message is not None
-    assert 'id' in last_message
-    assert 'text' in last_message
-    assert last_message['text'] == 'Hello World!'
+    # Verify that last_read_message is returned correctly
+    assert response['data']['last_read_message'] == last_message.id
 
-    # Check that the user has been successfully added to the chat
+    # Check if the user was successfully added to the chat
     is_participant = await database_sync_to_async(chat.participants.filter(id=user2.id).exists)()
     assert is_participant
 
@@ -178,12 +176,12 @@ async def test_join_chat():
     await communicator.send_json_to(join_chat_data)
     response = await communicator.receive_json_from()
 
-    # Verify that the response indicates the user is already in the chat
+    # Check that the response indicates the user is already in the chat
     assert response['type'] == 'info'
     assert 'message' in response
     assert response['message'] == 'You are already in the chat'
 
-    # Test with an invalid chat ID to ensure the error handling works
+    # Test with an invalid chat ID to check error handling
     join_chat_data_invalid_chat = {
         'command': 'joinChat',
         'chat_id': 9999,
@@ -191,12 +189,10 @@ async def test_join_chat():
     await communicator.send_json_to(join_chat_data_invalid_chat)
     response_invalid_chat = await communicator.receive_json_from()
 
-    # Verify that the response indicates the chat was not found
+    # Check that the response indicates the chat was not found
     assert response_invalid_chat['type'] == 'error'
     assert 'message' in response_invalid_chat
     assert response_invalid_chat['message'] == 'Chat not found'
-
-    # Disconnect the WebSocket
     await communicator.disconnect()
 
 
