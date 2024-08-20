@@ -19,7 +19,7 @@ class BaseMessage:
 
 class GetChatsMessage(BaseMessage):
     def __init__(self, serialized_chats: list[dict[str, Any]]):
-        super().__init__("getChats", serialized_chats)
+        super().__init__("chatsList", serialized_chats)
 
 
 class GetChatDetailsMessage(BaseMessage):

@@ -11,7 +11,7 @@ class ChatSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Chat
-        fields = ['id', 'name', 'participants', 'created_at', 'updated_at']
+        fields = ['id', 'participants', 'created_at', 'updated_at']
 
     def validate_participants(self, participants):
         if len(participants) != 2:

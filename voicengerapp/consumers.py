@@ -30,29 +30,35 @@ class ChatConsumer(AsyncWebsocketConsumer):
             text_data_json = json.loads(text_data)
             command = text_data_json.get('command')
             if command == 'getChats':
-                await self.handle_get_chats_massage()
+                await self.handle_get_chats()
             elif command == 'emptyChatCreated':
-                await self.handle_create_empty_chat_message(text_data_json)
+                await self.handle_create_empty_chat(text_data_json)
             elif command == 'joinChat':
-                await self.handle_join_chat_message(text_data_json)
+                await self.handle_join_chat(text_data_json)
             elif command == 'getChatDetails':
                 chat_id = text_data_json.get('chat_id')
                 await self.handle_get_chat_detail(chat_id)
         if bytes_data is not None:
             pass
 
-    async def handle_get_chats_massage(self):
+    async def handle_get_chats(self):
         """
         Handles a request to retrieve the list of chats.
 
         Note:
         This method does not accept input data or return any values.
         """
-        chats = await self.get_all_chats()
-        serialized_chats = await self.serialize_chats(chats)
-        message = GetChatsMessage(serialized_chats=serialized_chats)
-
-        await self.send(text_data=json.dumps(message.to_dict()))
+        try:
+            chats = await self.get_all_chats()
+            serialized_chats = await self.serialize_chats(chats)
+            message = GetChatsMessage(serialized_chats=serialized_chats)
+            await self.send(text_data=json.dumps(message.to_dict()))
+        except Exception as e:
+            error_message = {
+                "type": "error",
+                'message': str(e)
+            }
+            await self.send(text_data=json.dumps(error_message))
 
     async def handle_get_chat_detail(self, chat_id: int):
         """
@@ -70,7 +76,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = GetChatDetailsMessage(serialized_chat=serialized_chat)
         await self.send(text_data=json.dumps(message.to_dict()))
 
-    async def handle_create_empty_chat_message(self, data):
+    async def handle_create_empty_chat(self, data):
         """
         Handles the creation of a new chat.
 
@@ -79,21 +85,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         from voicengerapp.serializers import ChatSerializer
         participants_ids = data.get('participants', [])
         chat_data = {
-            'name': data.get('name', 'New Chat'),
             'participants': participants_ids
         }
-        serializer = ChatSerializer(data=chat_data)
-        if not serializer.is_valid():
+        serializer_chat = ChatSerializer(data=chat_data)
+
+        if not serializer_chat.is_valid():
             await self.send(text_data=json.dumps({
                 'type': 'error',
                 'message': 'Invalid data',
-                'errors': serializer.errors
+                'errors': serializer_chat.errors
             }))
             return
 
-        chat = await self.create_chat(
-            name=serializer.validated_data['name']
-        )
+        chat = await self.create_chat()
 
         if participants_ids:
             await self.add_participants_to_chat(chat.id, participants_ids)
@@ -108,7 +112,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         await self.send(text_data=json.dumps(message.to_dict()))
 
-    async def handle_join_chat_message(self, data):
+    async def handle_join_chat(self, data):
         """
         Processes a request to join a chat and displays the latest message.
         """
@@ -162,11 +166,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return serializer.data
 
     @database_sync_to_async
-    def create_chat(self, name: str):
+    def create_chat(self):
         from voicengerapp.models import Chat
-        chat = Chat.objects.create(
-            name=name
-        )
+        chat = Chat.objects.create()
         return chat
 
     @database_sync_to_async

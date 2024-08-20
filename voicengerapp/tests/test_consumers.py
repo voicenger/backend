@@ -15,9 +15,7 @@ async def test_get_chats():
         username='testuser',
         password='password123'
     )
-    chat = await database_sync_to_async(Chat.objects.create)(
-        name='Test Chat'
-    )
+    chat = await database_sync_to_async(Chat.objects.create)()
     await database_sync_to_async(chat.participants.add)(user)
 
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
@@ -27,8 +25,7 @@ async def test_get_chats():
 
     await communicator.send_json_to({'command': 'getChats'})
     response = await communicator.receive_json_from()
-    assert response['type'] == 'getChats'
-
+    assert response['type'] == 'chatsList'
     assert 'data' in response
     chats = response['data']
     assert isinstance(chats, list)
@@ -36,9 +33,6 @@ async def test_get_chats():
 
     first_chat = chats[0]
     assert 'id' in first_chat
-    assert 'name' in first_chat
-    assert first_chat['name'] == 'Test Chat'
-
     await communicator.disconnect()
 
 
@@ -49,9 +43,7 @@ async def test_get_chat_detail():
         username='testuser1',
         password='password123'
     )
-    chat = await database_sync_to_async(Chat.objects.create)(
-        name='Test Chat 2'
-    )
+    chat = await database_sync_to_async(Chat.objects.create)()
     await database_sync_to_async(chat.participants.add)(user)
 
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
@@ -76,7 +68,6 @@ async def test_get_chat_detail():
     assert 'chat' in response['data']
     chat_details = response['data']['chat']
     assert chat_details['id'] == chat.id
-    assert chat_details['name'] == 'Test Chat 2'
     assert len(chat_details['participants']) == 1
     assert chat_details['participants'][0]['username'] == 'testuser1'
 
@@ -100,7 +91,6 @@ async def test_create_chat():
     # Data for creating a new chat
     chat_data = {
         'command': 'emptyChatCreated',
-        'name': 'New Test Chat',
         'participants': [user.id],
     }
     # Send the data to create the chat and wait for a response
@@ -138,9 +128,7 @@ async def test_join_chat():
     )
 
     # Create a chat and add the first user as a participant
-    chat = await database_sync_to_async(Chat.objects.create)(
-        name='Test Chat'
-    )
+    chat = await database_sync_to_async(Chat.objects.create)()
     await database_sync_to_async(chat.participants.add)(user1)
 
     # Create a message in the chat
