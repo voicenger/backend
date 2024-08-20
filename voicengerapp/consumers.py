@@ -31,7 +31,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             command = text_data_json.get('command')
             if command == 'getChats':
                 await self.handle_get_chats()
-            elif command == 'emptyChatCreated':
+            elif command == 'createEmptyChat':
                 await self.handle_create_empty_chat(text_data_json)
             elif command == 'joinChat':
                 await self.handle_join_chat(text_data_json)
@@ -104,20 +104,39 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
             return
 
-        chat = await self.create_chat()
+        try:
+            chat = await self.create_chat()
+        except Exception as e:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': f'Failed to create chat: {str(e)}'
+            }))
+            return
 
-        if participants_ids:
-            await self.add_participants_to_chat(chat.id, participants_ids)
+        try:
+            if participants_ids:
+                await self.add_participants_to_chat(chat.id, participants_ids)
+        except Exception as e:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': f'Failed to add participants to chat: {str(e)}'
+            }))
+            return
 
-        chat_data = await self.serialize_chat(chat)
-
-        message = CreateEmptyChatMessage(
-            chat_id=chat_data['id'],
-            participants=chat_data['participants'],
-            created_at=chat_data['created_at'],
-            updated_at=chat_data['updated_at'],
-        )
-        await self.send(text_data=json.dumps(message.to_dict()))
+        try:
+            chat_data = await self.serialize_chat(chat)
+            message = CreateEmptyChatMessage(
+                chat_id=chat_data['id'],
+                participants=chat_data['participants'],
+                created_at=chat_data['created_at'],
+                updated_at=chat_data['updated_at'],
+            )
+            await self.send(text_data=json.dumps(message.to_dict()))
+        except Exception as e:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': f'Failed to serialize chat data: {str(e)}'
+            }))
 
     async def handle_join_chat(self, data):
         """
@@ -165,7 +184,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'error',
                 'message': f'An unexpected error occurred: {str(e)}'
             }))
-
 
     @database_sync_to_async
     def get_all_chats(self):

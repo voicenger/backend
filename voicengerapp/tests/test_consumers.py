@@ -89,7 +89,7 @@ async def test_create_chat():
 
     # Data for creating a new chat
     chat_data = {
-        'command': 'emptyChatCreated',
+        'command': 'createEmptyChat',
         'participants': [user.id],
     }
     # Send the data to create the chat and wait for a response
