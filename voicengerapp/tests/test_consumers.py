@@ -63,10 +63,9 @@ async def test_get_chat_detail():
     response = await communicator.receive_json_from()
 
     # Assert the response
-    assert response['type'] == 'getChatDetails'
+    assert response['type'] == 'chatDetails'
     assert 'data' in response
-    assert 'chat' in response['data']
-    chat_details = response['data']['chat']
+    chat_details = response['data']
     assert chat_details['id'] == chat.id
     assert len(chat_details['participants']) == 1
     assert chat_details['participants'][0]['username'] == 'testuser1'

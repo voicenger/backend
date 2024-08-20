@@ -24,10 +24,7 @@ class GetChatsMessage(BaseMessage):
 
 class GetChatDetailsMessage(BaseMessage):
     def __init__(self, serialized_chat: dict[str, Any]):
-        data = {
-            "chat": serialized_chat
-        }
-        super().__init__("getChatDetails", data)
+        super().__init__("chatDetails", serialized_chat)
 
 
 class CreateEmptyChatMessage(BaseMessage):

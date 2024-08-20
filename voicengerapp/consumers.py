@@ -64,17 +64,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
         """
         Handles a request to retrieve the details of a specific chat.
         """
-        chat = await self.get_chat(chat_id)
-        if chat is None:
+        try:
+            chat = await self.get_chat(chat_id)
+            if chat is None:
+                error_message = {
+                    'type': 'error',
+                    'message': 'Chat not found'
+                }
+                await self.send(text_data=json.dumps(error_message))
+                return
+            serialized_chat = await self.serialize_chat(chat)
+            message = GetChatDetailsMessage(serialized_chat=serialized_chat)
+            await self.send(text_data=json.dumps(message.to_dict()))
+        except Exception as e:
             error_message = {
                 'type': 'error',
-                'message': 'Chat not found'
+                'message': f'An error occurred: {str(e)}'
             }
             await self.send(text_data=json.dumps(error_message))
-            return
-        serialized_chat = await self.serialize_chat(chat)
-        message = GetChatDetailsMessage(serialized_chat=serialized_chat)
-        await self.send(text_data=json.dumps(message.to_dict()))
 
     async def handle_create_empty_chat(self, data):
         """
