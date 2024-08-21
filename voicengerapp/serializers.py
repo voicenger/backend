@@ -49,6 +49,21 @@ class MessageSerializer(serializers.ModelSerializer):
 
         return data
 
+class WebSocketMessageSerializer(serializers.ModelSerializer):
+    sender_username = serializers.CharField(source='sender.username', read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ['id', 'chat', 'sender', 'sender_username', 'text', 'timestamp', 'is_read']
+        read_only_fields = ['sender']
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['sender'] = {
+            'id': instance.sender.id,
+            'username': instance.sender.username
+        }
+        return representation
 
 class MessageSummarySerializer(serializers.ModelSerializer):
     class Meta:

@@ -1,8 +1,11 @@
+from typing import Any
+
 from channels.db import database_sync_to_async
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import ObjectDoesNotExist
-from voicengerapp.massage import GetChatsMessage, CreateEmptyChatMessage, JoinChatMessage, GetChatDetailsMessage
+from voicengerapp.massage import GetChatsMessage, CreateEmptyChatMessage, JoinChatMessage, GetChatDetailsMessage, \
+    NewMessage
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
@@ -37,11 +40,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.handle_join_chat(text_data_json)
             elif command == 'getChatDetails':
                 chat_id = text_data_json.get('chat_id')
+                if chat_id is None:
+                    await self.send(text_data=json.dumps({
+                        'type': 'error',
+                        'message': 'Chat ID is required.'
+                    }))
+                    return
                 await self.handle_get_chat_detail(chat_id)
+            elif command == 'newMessage':
+                await self.handle_create_new_message(text_data_json)
+        else:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Invalid command.'
+            }))
         if bytes_data is not None:
             pass
 
-    async def handle_get_chats(self):
+    async def handle_get_chats(self) -> None:
         """
         Handles a request to retrieve the list of chats.
 
@@ -59,7 +75,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "message": "An error occurred while retrieving chats. Please try again later."
             }))
 
-    async def handle_get_chat_detail(self, chat_id: int):
+    async def handle_get_chat_detail(self, chat_id: int) -> None:
         """
         Handles a request to retrieve the details of a specific chat.
         """
@@ -81,7 +97,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'message': 'An error occurred while retrieving chat details. Please try again later.'
             }))
 
-    async def handle_create_empty_chat(self, data):
+    async def handle_create_empty_chat(self, data: dict[str, Any]) -> None:
         """
         Handles the creation of a new chat.
 
@@ -130,7 +146,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         )
         await self.send(text_data=json.dumps(message.to_dict()))
 
-    async def handle_join_chat(self, data):
+    async def handle_join_chat(self, data: dict[str, Any]) -> None:
         """
         Processes a request to join a chat and displays the latest message.
         """
@@ -171,10 +187,58 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
             await self.send(text_data=json.dumps(message.to_dict()))
 
-        except Exception as e:
+        except Exception:
             await self.send(text_data=json.dumps({
                 'type': 'error',
                 'message': 'An unexpected error occurred. Please try again later.'
+            }))
+
+    async def handle_create_new_message(self, data: dict[str, Any]) -> None:
+        """
+        Handles the creation of a new message in a chat.
+        """
+        from voicengerapp.serializers import WebSocketMessageSerializer
+        chat_id = data.get('chat_id')
+        text = data.get('text')
+
+        user = self.scope['user']
+        if not chat_id or not text:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Invalid data. Chat ID and text are required.'
+            }))
+            return
+
+        try:
+            chat = await self.get_chat(chat_id=chat_id)
+            if chat is None:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Chat not found.'
+                }))
+                return
+
+            message = await self.create_message(chat_id=chat_id, text=text, sender=user)
+            serializer = WebSocketMessageSerializer(message)
+            serialized_data = serializer.data
+
+            response_message = NewMessage(
+                message_id=serialized_data['id'],
+                chat_id=serialized_data['chat'],
+                sender={
+                    'id': serialized_data['sender']['id'],
+                    'username': serialized_data['sender_username']
+                },
+                text=serialized_data['text'],
+                timestamp=serialized_data['timestamp'],
+                is_read=serialized_data['is_read']
+            )
+
+            await self.send(text_data=json.dumps(response_message.to_dict()))
+        except Exception:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'An error occurred while creating the message. Please try again later.'
             }))
 
     @database_sync_to_async
@@ -183,7 +247,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         return Chat.objects.all()
 
     @database_sync_to_async
-    def serialize_chats(self, chats):
+    def serialize_chats(self, chats: list):
         from voicengerapp.serializers import ChatSerializer
         serializer = ChatSerializer(chats, many=True)
         return serializer.data
@@ -192,6 +256,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def serialize_chat(self, chat):
         from voicengerapp.serializers import ChatSerializer
         serializer = ChatSerializer(chat)
+        return serializer.data
+
+    @database_sync_to_async
+    def serialize_message(self, message):
+        from voicengerapp.serializers import MessageSerializer
+        serializer = MessageSerializer(message)
         return serializer.data
 
     @database_sync_to_async
@@ -239,10 +309,21 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return None
 
     @database_sync_to_async
-    def get_last_message(self, chat_id):
+    def get_last_message(self, chat_id: id):
         from voicengerapp.models import Message
         try:
             last_message = Message.objects.filter(chat_id=chat_id).latest('timestamp')
             return last_message.id
         except Message.DoesNotExist:
             return None
+
+    @database_sync_to_async
+    def create_message(self, chat_id: int, text: str, sender):
+        from voicengerapp.models import Message
+        message = Message.objects.create(
+            chat_id=chat_id,
+            text=text,
+            sender=sender,
+            is_read=False  # Assuming default unread status
+        )
+        return message

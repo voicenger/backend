@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Any
 
+from pyasn1.type.univ import Boolean
+
 
 class BaseMessage:
     def __init__(self, message_type: str, data: Any):
@@ -28,7 +30,12 @@ class GetChatDetailsMessage(BaseMessage):
 
 
 class CreateEmptyChatMessage(BaseMessage):
-    def __init__(self, chat_id: int, participants: list[int], created_at: datetime, updated_at: datetime):
+    def __init__(
+            self, chat_id: int,
+            participants: list[int],
+            created_at: datetime,
+            updated_at: datetime
+    ):
         data = {
             "id": chat_id,
             "participants": participants,
@@ -39,7 +46,11 @@ class CreateEmptyChatMessage(BaseMessage):
 
 
 class JoinChatMessage(BaseMessage):
-    def __init__(self, chat_id: int, user=None, last_read_message=None):
+    def __init__(
+            self, chat_id: int,
+            user=None,
+            last_read_message=None
+        ):
         data = {
             "chat": chat_id,
             "user": {
@@ -50,3 +61,28 @@ class JoinChatMessage(BaseMessage):
         if last_read_message is not None:
             data["last_read_message"] = last_read_message
         super().__init__("chatJoined", data)
+
+
+class NewMessage(BaseMessage):
+    def __init__(
+            self, message_id: int,
+            chat_id: int,
+            sender: dict,
+            text: str,
+            timestamp: str,
+            is_read: bool
+    ):
+        data = {
+            "id": message_id,
+            "chat": chat_id,
+            "sender":
+                {
+                    "id": sender["id"],
+                    "username": sender["username"],
+                },
+            "text": text,
+            "timestamp": timestamp,
+            "is_read": is_read
+        }
+
+        super().__init__("messageCreated", data)

@@ -198,6 +198,50 @@ async def test_join_chat():
 
 @pytest.mark.django_db
 @pytest.mark.asyncio
+async def test_create_new_message_success():
+    user = await database_sync_to_async(User.objects.create_user)(
+        username='testuser22',
+        password='password123'
+    )
+
+    chat = await database_sync_to_async(Chat.objects.create)()
+    await database_sync_to_async(chat.participants.add)(user)
+
+
+    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
+    communicator.scope['user'] = user
+    connected, _ = await communicator.connect()
+    assert connected
+
+    message_data = {
+        'command': 'newMessage',
+        'chat_id': chat.id,
+        'text': 'Hello World!',
+    }
+
+    await communicator.send_json_to(message_data)
+    response = await communicator.receive_json_from()
+
+    assert response['type'] == 'messageCreated'
+    assert 'data' in response
+
+    message = response['data']
+    assert 'id' in message
+    assert 'chat' in message
+    assert 'sender' in message
+    assert 'text' in message
+    assert 'timestamp' in message
+    assert 'is_read' in message
+    assert message['text'] == 'Hello World!'
+    assert message['sender']['id'] == user.id
+    assert message['sender']['username'] == user.username
+    assert message['is_read'] == False
+
+    await communicator.disconnect()
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
 async def test_unauthenticated_user():
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
     connected, _ = await communicator.connect()
