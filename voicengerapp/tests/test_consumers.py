@@ -179,7 +179,7 @@ async def test_join_chat():
     # Check that the response indicates the user is already in the chat
     assert response['type'] == 'info'
     assert 'message' in response
-    assert response['message'] == 'You are already in the chat'
+    assert response['message'] == 'You are already a participant in this chat.'
 
     # Test with an invalid chat ID to check error handling
     join_chat_data_invalid_chat = {
@@ -192,7 +192,7 @@ async def test_join_chat():
     # Check that the response indicates the chat was not found
     assert response_invalid_chat['type'] == 'error'
     assert 'message' in response_invalid_chat
-    assert response_invalid_chat['message'] == 'Chat not found'
+    assert response_invalid_chat['message'] == 'The chat you are trying to join does not exist.'
     await communicator.disconnect()
 
 

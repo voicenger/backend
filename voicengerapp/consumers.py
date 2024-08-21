@@ -53,12 +53,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             serialized_chats = await self.serialize_chats(chats)
             message = GetChatsMessage(serialized_chats=serialized_chats)
             await self.send(text_data=json.dumps(message.to_dict()))
-        except Exception as e:
-            error_message = {
+        except Exception:
+            await self.send(text_data=json.dumps({
                 "type": "error",
-                'message': str(e)
-            }
-            await self.send(text_data=json.dumps(error_message))
+                "message": "An error occurred while retrieving chats. Please try again later."
+            }))
 
     async def handle_get_chat_detail(self, chat_id: int):
         """
@@ -76,12 +75,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
             serialized_chat = await self.serialize_chat(chat)
             message = GetChatDetailsMessage(serialized_chat=serialized_chat)
             await self.send(text_data=json.dumps(message.to_dict()))
-        except Exception as e:
-            error_message = {
+        except Exception:
+            await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': f'An error occurred: {str(e)}'
-            }
-            await self.send(text_data=json.dumps(error_message))
+                'message': 'An error occurred while retrieving chat details. Please try again later.'
+            }))
 
     async def handle_create_empty_chat(self, data):
         """
@@ -106,37 +104,31 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         try:
             chat = await self.create_chat()
-        except Exception as e:
+        except Exception:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': f'Failed to create chat: {str(e)}'
+                'message': 'Could not create chat. Please try again later.'
             }))
             return
 
         try:
             if participants_ids:
                 await self.add_participants_to_chat(chat.id, participants_ids)
-        except Exception as e:
+        except Exception:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': f'Failed to add participants to chat: {str(e)}'
+                'message': 'Could not add participants to chat. Please try again later.'
             }))
             return
 
-        try:
-            chat_data = await self.serialize_chat(chat)
-            message = CreateEmptyChatMessage(
-                chat_id=chat_data['id'],
-                participants=chat_data['participants'],
-                created_at=chat_data['created_at'],
-                updated_at=chat_data['updated_at'],
-            )
-            await self.send(text_data=json.dumps(message.to_dict()))
-        except Exception as e:
-            await self.send(text_data=json.dumps({
-                'type': 'error',
-                'message': f'Failed to serialize chat data: {str(e)}'
-            }))
+        chat_data = await self.serialize_chat(chat)
+        message = CreateEmptyChatMessage(
+            chat_id=chat_data['id'],
+            participants=chat_data['participants'],
+            created_at=chat_data['created_at'],
+            updated_at=chat_data['updated_at'],
+        )
+        await self.send(text_data=json.dumps(message.to_dict()))
 
     async def handle_join_chat(self, data):
         """
@@ -151,7 +143,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if chat is None:
                 await self.send(text_data=json.dumps({
                     'type': 'error',
-                    'message': 'Chat not found'
+                    'message': 'The chat you are trying to join does not exist.'
                 }))
                 return
 
@@ -159,16 +151,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
             if is_participant:
                 await self.send(text_data=json.dumps({
                     'type': 'info',
-                    'message': 'You are already in the chat'
+                    'message': 'You are already a participant in this chat.'
                 }))
                 return
 
             try:
                 await self.add_participants_to_chat(chat_id=chat_id, participants_ids=[user.id])
-            except Exception as e:
+            except Exception:
                 await self.send(text_data=json.dumps({
                     'type': 'error',
-                    'message': f'Failed to join the chat: {str(e)}'
+                    'message': 'Failed to join the chat. Please try again later.'
                 }))
                 return
             last_message_id = await self.get_last_message(chat_id=chat_id)
@@ -182,7 +174,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except Exception as e:
             await self.send(text_data=json.dumps({
                 'type': 'error',
-                'message': f'An unexpected error occurred: {str(e)}'
+                'message': 'An unexpected error occurred. Please try again later.'
             }))
 
     @database_sync_to_async
