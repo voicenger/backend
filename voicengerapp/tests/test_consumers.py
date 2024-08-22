@@ -1,8 +1,4 @@
 import pytest
-from channels.db import database_sync_to_async
-from channels.testing import WebsocketCommunicator
-from voicengerapp.consumers import ChatConsumer
-from voicengerapp.models import Chat, Message
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -134,7 +130,8 @@ async def test_join_chat():
     last_message = await database_sync_to_async(Message.objects.create)(
         chat=chat,
         sender=user1,
-        text='Hello World!'
+        text='Hello World!',
+        timestamp=datetime.now(timezone.utc)
     )
 
     # Set up WebSocket and authenticate the second user
@@ -207,7 +204,6 @@ async def test_create_new_message_success():
     chat = await database_sync_to_async(Chat.objects.create)()
     await database_sync_to_async(chat.participants.add)(user)
 
-
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
     communicator.scope['user'] = user
     connected, _ = await communicator.connect()
@@ -246,4 +242,79 @@ async def test_unauthenticated_user():
     communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
     connected, _ = await communicator.connect()
     assert not connected
+    await communicator.disconnect()
+
+import pytest
+from datetime import datetime, timedelta, timezone
+from channels.testing import WebsocketCommunicator
+from django.contrib.auth import get_user_model
+from voicengerapp.models import Chat, Message
+from voicengerapp.consumers import ChatConsumer
+from channels.db import database_sync_to_async
+
+User = get_user_model()
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_chat_messages():
+    user = await database_sync_to_async(User.objects.create_user)(
+        username='testuser0001111',
+        password='password123'
+    )
+    chat = await database_sync_to_async(Chat.objects.create)()
+    await database_sync_to_async(chat.participants.add)(user)
+
+    now = datetime.now(timezone.utc)
+    timestamp1 = now - timedelta(days=3)
+    timestamp2 = now - timedelta(days=1, hours=2)
+    timestamp3 = now - timedelta(hours=1)
+
+    message1 = await database_sync_to_async(Message.objects.create)(
+        chat=chat, sender=user, text="Message 1", timestamp=timestamp1
+    )
+    message2 = await database_sync_to_async(Message.objects.create)(
+        chat=chat, sender=user, text="Message 2", timestamp=timestamp2
+    )
+    message3 = await database_sync_to_async(Message.objects.create)(
+        chat=chat, sender=user, text="Message 3", timestamp=timestamp3
+    )
+
+    assert message1.timestamp == timestamp1, f"Expected: {timestamp1}, but got: {message1.timestamp}"
+    assert message2.timestamp == timestamp2, f"Expected: {timestamp2}, but got: {message2.timestamp}"
+    assert message3.timestamp == timestamp3, f"Expected: {timestamp3}, but got: {message3.timestamp}"
+
+    print(f"Message 1 timestamp: {message1.timestamp}")
+    print(f"Message 2 timestamp: {message2.timestamp}")
+    print(f"Message 3 timestamp: {message3.timestamp}")
+
+    communicator = WebsocketCommunicator(ChatConsumer.as_asgi(), "/ws/chats/")
+    communicator.scope['user'] = user
+    connected, _ = await communicator.connect()
+    assert connected
+
+
+    await communicator.send_json_to({
+        "command": "getChatMessages",
+        "data": {
+            "chatId": chat.id,
+            "date_from": "yesterday"
+        }
+    })
+
+    response = await communicator.receive_json_from()
+    assert response['command'] == 'chatMessages'
+    assert len(response['data']) == 2
+
+    await communicator.send_json_to({
+        "command": "getChatMessages",
+        "data": {
+            "chatId": chat.id,
+            "last": 1
+        }
+    })
+
+    response = await communicator.receive_json_from()
+    assert response['command'] == 'chatMessages'
+    assert len(response['data']) == 1
+
     await communicator.disconnect()

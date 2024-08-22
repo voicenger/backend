@@ -1,9 +1,11 @@
+from datetime import datetime, timedelta
 from typing import Any
-
 from channels.db import database_sync_to_async
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils.dateparse import parse_date
+from django.utils import timezone
 from voicengerapp.massage import GetChatsMessage, CreateEmptyChatMessage, JoinChatMessage, GetChatDetailsMessage, \
     NewMessage
 
@@ -49,6 +51,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.handle_get_chat_detail(chat_id)
             elif command == 'newMessage':
                 await self.handle_create_new_message(text_data_json)
+            elif command == 'getChatMessages':
+                await self.handle_get_chat_messages(text_data_json.get('data', {}))
         else:
             await self.send(text_data=json.dumps({
                 'type': 'error',
@@ -56,6 +60,75 @@ class ChatConsumer(AsyncWebsocketConsumer):
             }))
         if bytes_data is not None:
             pass
+
+    async def handle_get_chat_messages(self, data: dict[str, Any]) -> None:
+        """
+        Handles the retrieval of messages from a chat with optional filtering by date and/or limit.
+        """
+        chat_id = data.get('chatId')
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
+        last = data.get('last')
+
+        if not chat_id:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Chat ID is required.'
+            }))
+            return
+
+        chat = await self.get_chat(chat_id)
+        if not chat:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Chat not found.'
+            }))
+            return
+
+        messages = await self.get_messages(chat_id, date_from, date_to, last)
+
+        serialized_messages = await self.serialize_messages(messages)
+
+        await self.send(text_data=json.dumps({
+            'command': 'chatMessages',
+            'data': serialized_messages
+        }))
+
+    @database_sync_to_async
+    def get_messages(self, chat_id, date_from=None, date_to=None, last=None):
+        from voicengerapp.models import Message
+        messages = Message.objects.filter(chat_id=chat_id)
+
+        if date_from:
+            date_from = self.parse_custom_date(date_from)
+            if date_from:
+                messages = messages.filter(timestamp__date__gte=date_from)
+
+        if date_to:
+            date_to = parse_date(date_to)
+            if date_to:
+                messages = messages.filter(timestamp__date__lte=date_to)
+
+        if last and str(last).isdigit():
+            messages = messages.order_by('-timestamp')[:int(last)]
+
+        return messages
+
+    @database_sync_to_async
+    def serialize_messages(self, messages):
+        from voicengerapp.serializers import WebSocketMessageSerializer
+        serializer = WebSocketMessageSerializer(messages, many=True)
+        return serializer.data
+
+    def parse_custom_date(self, date_str):
+        if date_str == 'yesterday':
+            return datetime.now().date() - timedelta(days=1)
+        elif date_str == 'day_before_yesterday':
+            return datetime.now().date() - timedelta(days=2)
+        elif date_str == 'last_7_days':
+            return datetime.now().date() - timedelta(days=7)
+        else:
+            return parse_date(date_str)
 
     async def handle_get_chats(self) -> None:
         """
@@ -324,6 +397,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             chat_id=chat_id,
             text=text,
             sender=sender,
+            timestamp=timezone.now(),
             is_read=False  # Assuming default unread status
         )
         return message
