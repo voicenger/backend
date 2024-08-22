@@ -1,5 +1,10 @@
 import pytest
+from datetime import datetime, timedelta, timezone
+from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
+from voicengerapp.models import Chat, Message
+from voicengerapp.consumers import ChatConsumer
+from channels.db import database_sync_to_async
 
 User = get_user_model()
 
@@ -244,15 +249,6 @@ async def test_unauthenticated_user():
     assert not connected
     await communicator.disconnect()
 
-import pytest
-from datetime import datetime, timedelta, timezone
-from channels.testing import WebsocketCommunicator
-from django.contrib.auth import get_user_model
-from voicengerapp.models import Chat, Message
-from voicengerapp.consumers import ChatConsumer
-from channels.db import database_sync_to_async
-
-User = get_user_model()
 
 @pytest.mark.django_db
 @pytest.mark.asyncio
