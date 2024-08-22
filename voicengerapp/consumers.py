@@ -1,47 +1,248 @@
+from channels.db import database_sync_to_async
 import json
-
-import httpx
 from channels.generic.websocket import AsyncWebsocketConsumer
-from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
+from voicengerapp.massage import GetChatsMessage, CreateEmptyChatMessage, JoinChatMessage, GetChatDetailsMessage
 
 
-class Token(AsyncWebsocketConsumer):
+class ChatConsumer(AsyncWebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
     async def connect(self):
-        await self.accept()
+        user = self.scope.get('user')
+
+        if user and user.is_authenticated:
+            self.user = user
+            await self.accept()
+        else:
+            await self.close()
 
     async def disconnect(self, close_code):
         pass
 
-    async def receive(self, text_data):
-        request = json.loads(text_data)
+    async def receive(self, text_data=None, bytes_data=None):
+        """
+        Processes incoming data via WebSocket.
+        """
+        if text_data is not None:
+            text_data_json = json.loads(text_data)
+            command = text_data_json.get('command')
+            if command == 'getChats':
+                await self.handle_get_chats()
+            elif command == 'createEmptyChat':
+                await self.handle_create_empty_chat(text_data_json)
+            elif command == 'joinChat':
+                await self.handle_join_chat(text_data_json)
+            elif command == 'getChatDetails':
+                chat_id = text_data_json.get('chat_id')
+                await self.handle_get_chat_detail(chat_id)
+        if bytes_data is not None:
+            pass
 
-        method = request.get('method', 'GET').lower()
-        url = request.get('url')
-        headers = request.get('headers', {})
-        data = request.get('data', None)
+    async def handle_get_chats(self):
+        """
+        Handles a request to retrieve the list of chats.
 
-        # Формирование полного URL
-        full_url = f'{settings.API_BASE_URL}{url}'
+        Note:
+        This method does not accept input data or return any values.
+        """
+        try:
+            chats = await self.get_all_chats()
+            serialized_chats = await self.serialize_chats(chats)
+            message = GetChatsMessage(serialized_chats=serialized_chats)
+            await self.send(text_data=json.dumps(message.to_dict()))
+        except Exception:
+            await self.send(text_data=json.dumps({
+                "type": "error",
+                "message": "An error occurred while retrieving chats. Please try again later."
+            }))
 
-        # Ограничение на метод POST
-        if method != 'post':
-            response_data = {
-                "error": "Only POST method is allowed for this endpoint"
-            }
-            await self._send_response(response_data)
+    async def handle_get_chat_detail(self, chat_id: int):
+        """
+        Handles a request to retrieve the details of a specific chat.
+        """
+        try:
+            chat = await self.get_chat(chat_id)
+            if chat is None:
+                error_message = {
+                    'type': 'error',
+                    'message': 'Chat not found'
+                }
+                await self.send(text_data=json.dumps(error_message))
+                return
+            serialized_chat = await self.serialize_chat(chat)
+            message = GetChatDetailsMessage(serialized_chat=serialized_chat)
+            await self.send(text_data=json.dumps(message.to_dict()))
+        except Exception:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'An error occurred while retrieving chat details. Please try again later.'
+            }))
+
+    async def handle_create_empty_chat(self, data):
+        """
+        Handles the creation of a new chat.
+
+        This method processes incoming data to create a new chat and optionally add participants to it.
+        """
+        from voicengerapp.serializers import ChatSerializer
+        participants_ids = data.get('participants', [])
+        chat_data = {
+            'participants': participants_ids
+        }
+        serializer_chat = ChatSerializer(data=chat_data)
+
+        if not serializer_chat.is_valid():
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Invalid data',
+                'errors': serializer_chat.errors
+            }))
             return
 
-        async with httpx.AsyncClient() as client:
-            response = await client.post(full_url, json=data, headers=headers)
+        try:
+            chat = await self.create_chat()
+        except Exception:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Could not create chat. Please try again later.'
+            }))
+            return
 
-            response_data = {
-                "status_code": response.status_code,
-                "data": response.json()
-            } if response else {
-                "error": "Failed to perform the request"
-            }
+        try:
+            if participants_ids:
+                await self.add_participants_to_chat(chat.id, participants_ids)
+        except Exception:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'Could not add participants to chat. Please try again later.'
+            }))
+            return
 
-            await self._send_response(response_data)
+        chat_data = await self.serialize_chat(chat)
+        message = CreateEmptyChatMessage(
+            chat_id=chat_data['id'],
+            participants=chat_data['participants'],
+            created_at=chat_data['created_at'],
+            updated_at=chat_data['updated_at'],
+        )
+        await self.send(text_data=json.dumps(message.to_dict()))
 
-    async def _send_response(self, data):
-        await self.send(text_data=json.dumps(data))
+    async def handle_join_chat(self, data):
+        """
+        Processes a request to join a chat and displays the latest message.
+        """
+        chat_id = data.get('chat_id')
+        last_read_message_id = data.get('last_read_message', None)
+
+        user = self.scope["user"]
+        try:
+            chat = await self.get_chat(chat_id=chat_id)
+            if chat is None:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'The chat you are trying to join does not exist.'
+                }))
+                return
+
+            is_participant = await self.is_user_in_chat(user=user, chat=chat)
+            if is_participant:
+                await self.send(text_data=json.dumps({
+                    'type': 'info',
+                    'message': 'You are already a participant in this chat.'
+                }))
+                return
+
+            try:
+                await self.add_participants_to_chat(chat_id=chat_id, participants_ids=[user.id])
+            except Exception:
+                await self.send(text_data=json.dumps({
+                    'type': 'error',
+                    'message': 'Failed to join the chat. Please try again later.'
+                }))
+                return
+            last_message_id = await self.get_last_message(chat_id=chat_id)
+            message = JoinChatMessage(
+                chat_id=chat_id,
+                last_read_message=last_read_message_id or last_message_id,
+                user=user
+            )
+            await self.send(text_data=json.dumps(message.to_dict()))
+
+        except Exception as e:
+            await self.send(text_data=json.dumps({
+                'type': 'error',
+                'message': 'An unexpected error occurred. Please try again later.'
+            }))
+
+    @database_sync_to_async
+    def get_all_chats(self):
+        from voicengerapp.models import Chat
+        return Chat.objects.all()
+
+    @database_sync_to_async
+    def serialize_chats(self, chats):
+        from voicengerapp.serializers import ChatSerializer
+        serializer = ChatSerializer(chats, many=True)
+        return serializer.data
+
+    @database_sync_to_async
+    def serialize_chat(self, chat):
+        from voicengerapp.serializers import ChatSerializer
+        serializer = ChatSerializer(chat)
+        return serializer.data
+
+    @database_sync_to_async
+    def create_chat(self):
+        from voicengerapp.models import Chat
+        chat = Chat.objects.create()
+        return chat
+
+    @database_sync_to_async
+    def add_participants_to_chat(self, chat_id: int, participants_ids: list[int]):
+        from voicengerapp.models import Chat
+        from django.contrib.auth.models import User
+        try:
+            chat = Chat.objects.get(id=chat_id)
+        except ObjectDoesNotExist:
+            return {'error': 'Chat not found'}
+
+        for participant_id in participants_ids:
+            try:
+                user = User.objects.get(id=participant_id)
+                chat.participants.add(user)
+            except ObjectDoesNotExist:
+                continue
+        chat.save()
+        return chat
+
+    @database_sync_to_async
+    def is_user_in_chat(self, user, chat):
+        return chat.participants.filter(id=user.id).exists()
+
+    @database_sync_to_async
+    def get_chat(self, chat_id):
+        from voicengerapp.models import Chat
+        try:
+            return Chat.objects.get(id=chat_id)
+        except Chat.DoesNotExist:
+            return None
+
+    @database_sync_to_async
+    def get_user(self, user_id: int):
+        from django.contrib.auth.models import User
+        try:
+            return User.objects.get(id=user_id)
+        except ObjectDoesNotExist:
+            return None
+
+    @database_sync_to_async
+    def get_last_message(self, chat_id):
+        from voicengerapp.models import Message
+        try:
+            last_message = Message.objects.filter(chat_id=chat_id).latest('timestamp')
+            return last_message.id
+        except Message.DoesNotExist:
+            return None

@@ -1,60 +1,97 @@
-import json
 from datetime import datetime, timedelta
-
-from decouple import config
 from django.contrib.auth import logout as django_logout
-from django.http import HttpResponseRedirect
-from django.shortcuts import render
 from django.utils.dateparse import parse_date
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status
-from rest_framework import viewsets, generics
+from rest_framework import viewsets, generics, status
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-
 from .models import Chat, Message, UserChat
 from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer
+from django.conf import settings
+from django.shortcuts import redirect
+from django.contrib.auth import login, logout as django_logout
+import requests
+from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseServerError
+from .utils import save_user_to_db # Function for saving user
 
 
-# Create your views here.
+def login_redirect(request):
+    # URL for redirecting to the Auth0 login page with required query parameters
+    auth0_url = (
+        f"https://{settings.AUTH0_DOMAIN}/authorize?"
+        f"audience={settings.API_IDENTIFIER}&"  # API audience to which the access token should be valid
+        f"response_type=code&"  # Authorization code flow
+        f"client_id={settings.SOCIAL_AUTH_AUTH0_KEY}&"  # Client ID for the Auth0 application
+        f"redirect_uri={settings.AUTH0_CALLBACK_URL}&"  # URI to which Auth0 will redirect after login
+        f"scope=openid profile email"  # Scopes to request from Auth0
+    )
+    return redirect(auth0_url)
 
-def index(request):
-    return render(request,'index.html')
+def auth0_callback(request):
+    code = request.GET.get('code')
 
+    if not code:
+        # Handle the case where the authorization code is missing from the request
+        return HttpResponseBadRequest("Authorization code is missing.")
 
+    try:
+        token_url = f"https://{settings.AUTH0_DOMAIN}/oauth/token"
+        token_data = {
+            'grant_type': 'authorization_code',
+            'client_id': settings.SOCIAL_AUTH_AUTH0_KEY,
+            'client_secret': settings.SOCIAL_AUTH_AUTH0_SECRET,
+            'code': code,
+            'redirect_uri': settings.AUTH0_CALLBACK_URL,
+        }
+        token_headers = {'Content-Type': 'application/json'}
+        token_response = requests.post(token_url, json=token_data, headers=token_headers)
 
-def profile(request):
-    user=request.user
+        if token_response.status_code != 200:
+            # Handle token request errors
+            return HttpResponseServerError(f"Failed to get tokens: {token_response.text}")
 
-    auth0_user=user.social_auth.get(provider='auth0')
+        tokens = token_response.json()
+        id_token = tokens.get('id_token')
+        access_token = tokens.get('access_token')
 
-    user_data={
-        'user_id':auth0_user.uid,
-        'name':user.first_name,
-        'picture':auth0_user.extra_data['picture']
-    }
+        if not id_token or not access_token:
+            # Handle the case where tokens are missing
+            return HttpResponseServerError("Failed to retrieve tokens from response.")
 
-    context={
-        'user_data':json.dumps(user_data,indent=4),
-        'auth0_user':auth0_user
-    }
+        # Save the user and handle login
+        user = save_user_to_db(id_token)
+        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
 
+        # Save the access token in an HttpOnly cookie for security
+        response = HttpResponse('Authentication successful')
+        response.set_cookie('access_token', access_token, httponly=True, secure=True)
+        
+        return response
 
-    return render(request,'profile.html',context)
+    except requests.RequestException as e:
+        # Handle network-related errors
+        return HttpResponseServerError(f"Network error occurred: {str(e)}")
 
-#logout
-# https://{domain}/v2/logout?client_id={client_id}&returnTo={return_to}
+    except ValueError as e:
+        # Handle errors related to token processing
+        return HttpResponseServerError(f"Token error: {str(e)}")
+
+    except Exception as e:
+        # Handle any other unexpected errors
+        return HttpResponseServerError(f"An unexpected error occurred: {str(e)}")
 
 def logout(request):
+    # End the user's session in Django
     django_logout(request)
-
-    domain=config('APP_DOMAIN')
-    client_id=config('APP_CLIENT_ID')
-    return_to='http://127.0.0.1:8000/api/app/'
-
-    return HttpResponseRedirect(f"https://{domain}/v2/logout?client_id={client_id}&returnTo={return_to}")
+    
+    # Create a response and redirect to Auth0 logout URL
+    # Also remove the access_token from Cookies
+    response = redirect(f"https://{settings.AUTH0_DOMAIN}/v2/logout?client_id={settings.SOCIAL_AUTH_AUTH0_KEY}&returnTo={settings.LOGOUT_REDIRECT_URL}")
+    response.delete_cookie('access_token')
+    
+    return response
 
 
 class ChatViewSet(viewsets.ModelViewSet):

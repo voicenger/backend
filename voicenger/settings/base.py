@@ -48,9 +48,6 @@ INSTALLED_APPS = [
 ]
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'voicengerapp.authentication.JWTAuthentication',
-    ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
@@ -172,21 +169,12 @@ PUBLIC_KEY = None
 JWT_ISSUER = f'https://{AUTH0_DOMAIN}/'
 JWT_AUDIENCE = API_IDENTIFIER
 
-
-SOCIAL_AUTH_TRAILING_SLASH = False
-SOCIAL_AUTH_AUTH0_DOMAIN = config('APP_DOMAIN')
 SOCIAL_AUTH_AUTH0_KEY = config('APP_CLIENT_ID')
 SOCIAL_AUTH_AUTH0_SECRET = config('APP_CLIENT_SECRET')
 
-SOCIAL_AUTH_AUTH0_SCOPE = [
-    'openid',
-    'profile',
-    'email',
-]
 
-LOGIN_URL = '/login/auth0'
-LOGIN_REDIRECT_URL = '/auth0/callback/'
-LOGOUT_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = 'http://localhost:8000/'
+AUTH0_CALLBACK_URL = 'http://localhost:8000/api/callback/'
 
 DATABASES = {
     'default': {
@@ -194,5 +182,3 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
-API_BASE_URL = 'http://127.0.0.1:8000'
