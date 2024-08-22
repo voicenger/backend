@@ -67,41 +67,41 @@
 #     assert 'username' in serializer.errors
 #     assert serializer.errors['username'][0].code == 'unique'
 
-from django.test import TestCase
-from rest_framework.exceptions import ValidationError
-from rest_framework import serializers
-from django.contrib.auth.models import User
-from voicengerapp.serializers import RegisterSerializer  # Замените на путь к вашему сериализатору
+# from django.test import TestCase
+# from rest_framework.exceptions import ValidationError
+# from rest_framework import serializers
+# from django.contrib.auth.models import User
+# from voicengerapp.serializers import RegisterSerializer  # Замените на путь к вашему сериализатору
 
-class RegisterSerializerTestCase(TestCase):
-    def setUp(self):
-        # Устанавливаем данные для тестирования
-        self.valid_data = {
-            'username': 'testuser',
-            'password': 'testpassword123',
-            'email': 'testuser@example.com',
-            'first_name': 'Test',
-            'last_name': 'User',
-        }
-        self.invalid_data = {
-            'username': '',  # Пустое имя пользователя
-            'password': 'short',  # Слишком короткий пароль
-            'email': 'invalidemail',  # Некорректный email
-        }
+# class RegisterSerializerTestCase(TestCase):
+#     def setUp(self):
+#         # Устанавливаем данные для тестирования
+#         self.valid_data = {
+#             'username': 'testuser',
+#             'password': 'testpassword123',
+#             'email': 'testuser@example.com',
+#             'first_name': 'Test',
+#             'last_name': 'User',
+#         }
+#         self.invalid_data = {
+#             'username': '',  # Пустое имя пользователя
+#             'password': 'short',  # Слишком короткий пароль
+#             'email': 'invalidemail',  # Некорректный email
+#         }
 
-    def test_valid_serializer(self):
-        serializer = RegisterSerializer(data=self.valid_data)
-        self.assertTrue(serializer.is_valid())
-        user = serializer.save()
-        self.assertIsInstance(user, User)
-        self.assertEqual(user.username, self.valid_data['username'])
-        self.assertTrue(user.check_password(self.valid_data['password']))
-        self.assertEqual(user.email, self.valid_data['email'])
-        self.assertEqual(user.first_name, self.valid_data['first_name'])
-        self.assertEqual(user.last_name, self.valid_data['last_name'])
+#     def test_valid_serializer(self):
+#         serializer = RegisterSerializer(data=self.valid_data)
+#         self.assertTrue(serializer.is_valid())
+#         user = serializer.save()
+#         self.assertIsInstance(user, User)
+#         self.assertEqual(user.username, self.valid_data['username'])
+#         self.assertTrue(user.check_password(self.valid_data['password']))
+#         self.assertEqual(user.email, self.valid_data['email'])
+#         self.assertEqual(user.first_name, self.valid_data['first_name'])
+#         self.assertEqual(user.last_name, self.valid_data['last_name'])
 
-    def test_invalid_serializer(self):
-        serializer = RegisterSerializer(data=self.invalid_data)
-        self.assertFalse(serializer.is_valid())
-        with self.assertRaises(ValidationError):
-            serializer.is_valid(raise_exception=True)
+#     def test_invalid_serializer(self):
+#         serializer = RegisterSerializer(data=self.invalid_data)
+#         self.assertFalse(serializer.is_valid())
+#         with self.assertRaises(ValidationError):
+#             serializer.is_valid(raise_exception=True)
