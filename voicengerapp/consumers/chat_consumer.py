@@ -23,13 +23,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.commands = ChatCommands(self)
 
     async def connect(self):
-        await self.accept()
-        # user = self.scope.get('user')
-        # if user and user.is_authenticated:
-        #     self.user = user
-        #     await self.accept()
-        # else:
-        #     await self.close()
+        user = self.scope.get('user')
+        if user and user.is_authenticated:
+            self.user = user
+            await self.accept()
+        else:
+            await self.close()
 
     async def disconnect(self, close_code):
         pass
