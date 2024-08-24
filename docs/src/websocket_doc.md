@@ -58,9 +58,7 @@ Create an empty chat entity, with no participants. The server creates a new chat
 ```json
 {
   "type": "createEmptyChat",
-  "data": {
-    "name": "string"  // Chat Name (optional)
-  }
+  "data": {}
 }
 ```
 
@@ -71,7 +69,6 @@ Create an empty chat entity, with no participants. The server creates a new chat
   "type": "emptyChatCreated",
   "data": {
     "id": "int",                 // New chat ID
-    "name": "string",            // Chat Name (if not specified, can be blank)
     "participants": [],          // List of participants
     "created_at": "string",      // Date and time of chat creation
     "updated_at": "string"       // Date and time of the last chat update
@@ -170,7 +167,7 @@ Send a new message to the specified chat room.
   "data": {
     "chat": "int",           // ID of the chat room to which the message is sent
     "text": "string",        // Message Text
-    "is_read": "boolean"     // Message read status
+    "is_read": "boolean"     // // Message read status (optional, defaults to False if not provided)
   }
 }
 ```
