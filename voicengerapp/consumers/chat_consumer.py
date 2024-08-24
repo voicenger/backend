@@ -1,7 +1,8 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from voicengerapp.consumers.chat_commands import ChatCommands
-
+from django.conf import settings
+from jose import JWTError
 import logging
 
 logger = logging.getLogger('voicenger')
@@ -23,11 +24,15 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.commands = ChatCommands(self)
 
     async def connect(self):
-        user = self.scope.get('user')
-        if user and user.is_authenticated:
-            self.user = user
-            await self.accept()
-        else:
+        try:
+            token = self.scope['query_string'].decode('utf8').split('=')[1]
+            self.user = await self.get_user_from_token(token)
+            if self.user:
+                await self.accept()
+            else:
+                await self.close(code=4001)  # Custom close code for unauthorized access
+        except (JWTError, IndexError, ValueError) as e:
+            logger.error(f"WebSocket connection error: {str(e)}")
             await self.close()
 
     async def disconnect(self, close_code):
@@ -80,4 +85,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
 
 
-
+    async def get_user_from_token(self, token):
+        from voicengerapp.utils import decode_and_verify_token  # Function to retrieve and save user from token
+        """
+        Проверяет и возвращает пользователя на основе переданного токена.
+        """
+        try:
+            user = decode_and_verify_token(token)  # Сохраняет или возвращает существующего пользователя из токена
+            return user
+        except ValueError as e:
+            logger.error(f"Token validation error: {e}")
+            return None

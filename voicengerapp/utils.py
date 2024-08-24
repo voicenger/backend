@@ -60,7 +60,7 @@ def save_user_to_db(id_token):
             id_token,
             rsa_key,
             algorithms=["RS256"],
-            audience=settings.SOCIAL_AUTH_AUTH0_KEY,
+            audience=settings.API_IDENTIFIER,
             issuer=f"https://{settings.AUTH0_DOMAIN}/"
         )
     except JWTError as e:
@@ -72,3 +72,32 @@ def save_user_to_db(id_token):
     # Create or retrieve the user based on the username and email
     user, created = User.objects.get_or_create(username=username, defaults={'email': email})
     return user
+
+def decode_and_verify_token(token):
+    """
+    Декодирует и проверяет JWT токен, не сохраняя пользователя в базе данных.
+
+    Args:
+        token (str): JWT токен, предоставленный Auth0.
+
+    Returns:
+        dict: Декодированный payload из JWT токена.
+
+    Raises:
+        ValueError: Если проверка токена не удалась или возникла ошибка при декодировании.
+    """
+    try:
+        # Получаем RSA ключ для проверки JWT токена
+        rsa_key = get_jwk_key(token)
+        
+        # Декодируем и проверяем JWT токен
+        payload = jwt.decode(
+            token,
+            rsa_key,
+            algorithms=["RS256"],
+            audience=settings.API_IDENTIFIER,
+            issuer=f"https://{settings.AUTH0_DOMAIN}/"
+        )
+        return payload
+    except JWTError as e:
+        raise ValueError(f"Token verification failed: {e}")
