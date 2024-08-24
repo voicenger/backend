@@ -1,9 +1,3 @@
-import pytest
-from channels.db import database_sync_to_async
-from channels.testing import WebsocketCommunicator
-from voicengerapp.consumers import ChatConsumer
-from voicengerapp.models import Chat, Message
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
