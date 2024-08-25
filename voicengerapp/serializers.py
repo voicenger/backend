@@ -1,8 +1,8 @@
-from django.contrib.auth.models import User
+
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Chat, Message, UserChat
+from .models import Chat, Message, User, UserChat
 
 
 class ChatSerializer(serializers.ModelSerializer):

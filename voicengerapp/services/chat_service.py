@@ -68,7 +68,7 @@ class ChatService:
         Adds participants to a chat.
         """
         from voicengerapp.models import Chat
-        from django.contrib.auth.models import User
+        from voicengerapp.models import User
         try:
             chat = Chat.objects.get(id=chat_id)
         except ObjectDoesNotExist:

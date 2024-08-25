@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Chat, Message, UserChat
+from .models import Chat, Message, UserChat, User
 
 
 @admin.register(Chat)
@@ -30,3 +30,8 @@ class UserChatAdmin(admin.ModelAdmin):
     list_display = ('user', 'chat', 'last_read_message')
     search_fields = ('user__username', 'chat__id')
     list_filter = ('chat',)
+
+@admin.register(User)
+class UserAdmin(admin.ModelAdmin):
+    list_display = ('username', 'email', 'auth0_sub')
+    search_fields = ('username', 'email')
