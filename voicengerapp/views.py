@@ -7,8 +7,8 @@ from rest_framework import viewsets, generics, status
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .models import Chat, Message, UserChat
-from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer
+from .models import Chat, Message, UserChat, UserProfile
+from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer, UserProfileSerializer
 from django.conf import settings
 from django.shortcuts import redirect
 from django.contrib.auth import login, logout as django_logout
@@ -33,7 +33,6 @@ def auth0_callback(request):
     code = request.GET.get('code')
 
     if not code:
-        # Handle the case where the authorization code is missing from the request
         return HttpResponseBadRequest("Authorization code is missing.")
 
     try:
@@ -49,7 +48,6 @@ def auth0_callback(request):
         token_response = requests.post(token_url, json=token_data, headers=token_headers)
 
         if token_response.status_code != 200:
-            # Handle token request errors
             return HttpResponseServerError(f"Failed to get tokens: {token_response.text}")
 
         tokens = token_response.json()
@@ -57,7 +55,6 @@ def auth0_callback(request):
         access_token = tokens.get('access_token')
 
         if not id_token or not access_token:
-            # Handle the case where tokens are missing
             return HttpResponseServerError("Failed to retrieve tokens from response.")
 
         # Save the user and handle login
@@ -71,15 +68,12 @@ def auth0_callback(request):
         return response
 
     except requests.RequestException as e:
-        # Handle network-related errors
         return HttpResponseServerError(f"Network error occurred: {str(e)}")
 
     except ValueError as e:
-        # Handle errors related to token processing
         return HttpResponseServerError(f"Token error: {str(e)}")
 
     except Exception as e:
-        # Handle any other unexpected errors
         return HttpResponseServerError(f"An unexpected error occurred: {str(e)}")
 
 def logout(request):
@@ -176,7 +170,23 @@ class UserChatViewSet(viewsets.ModelViewSet):
         return UserChat.objects.filter(user=user)
 
 
+# class RegisterView(generics.CreateAPIView):
+#     queryset = UserChat.objects.all()
+#     permission_classes = [AllowAny]
+#     serializer_class = RegisterSerializer
+
 class RegisterView(generics.CreateAPIView):
-    queryset = UserChat.objects.all()
-    permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        # После успешной регистрации перенаправляем на создание профиля
+        return redirect('create_profile')
+
+class UserProfileCreateView(generics.CreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

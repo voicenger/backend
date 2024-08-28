@@ -1,8 +1,8 @@
-from django.contrib.auth.models import User
+
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Chat, Message, UserChat
+from .models import Chat, Message, User, UserChat, UserProfile
 
 
 class ChatSerializer(serializers.ModelSerializer):
@@ -104,3 +104,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', ''),
         )
         return user
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['birth_date', 'phone_number', 'gender', 'profile_picture']
