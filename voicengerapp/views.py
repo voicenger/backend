@@ -7,8 +7,8 @@ from rest_framework import viewsets, generics, status
 from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .models import Chat, Message, UserChat
-from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer
+from .models import Chat, Message, UserChat, UserProfile
+from .serializers import ChatSerializer, MessageSerializer, UserChatSerializer, RegisterSerializer, UserProfileSerializer
 from django.conf import settings
 from django.shortcuts import redirect
 from django.contrib.auth import login, logout as django_logout
@@ -170,7 +170,23 @@ class UserChatViewSet(viewsets.ModelViewSet):
         return UserChat.objects.filter(user=user)
 
 
+# class RegisterView(generics.CreateAPIView):
+#     queryset = UserChat.objects.all()
+#     permission_classes = [AllowAny]
+#     serializer_class = RegisterSerializer
+
 class RegisterView(generics.CreateAPIView):
-    queryset = UserChat.objects.all()
-    permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        # После успешной регистрации перенаправляем на создание профиля
+        return redirect('create_profile')
+
+class UserProfileCreateView(generics.CreateAPIView):
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
