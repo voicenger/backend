@@ -53,6 +53,7 @@ nosetests.xml
 .hypothesis/
 .pytest_cache/
 cover/
+.ruff_cache
 
 # Translations
 *.mo
@@ -63,6 +64,10 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+
+# IDE - PyCharm
+.idea/
+*.iml
 
 # Flask stuff:
 instance/

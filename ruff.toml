@@ -1,0 +1,55 @@
+line-length = 120
+extend-exclude = [
+    "*/__init__.py",
+    "requirements*.txt",
+    "env/",
+    ".env",
+    ".env.*",
+]
+
+[lint]
+ignore = [
+    "ANN003",
+    "ANN101",
+    "ANN102",
+    "ANN204",
+     "ANN401",
+    "D105",
+    "D107",
+    "D200",
+    "D204",
+    "D413",
+    "F722",
+    "B904",
+    "COM812",
+]
+
+select = [
+    "A", # flake8-builtins
+    "Q", # flake8-quotes
+    "I", # isort
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "E", # pycodestyle errors
+    "ASYNC", # flake8-async
+    "ARG", # flake8-unused-arguments
+    "COM", # flake8-commas
+    "C4", # flake8-comprehensions
+    "T20", # flake8-print
+    "PIE", # flake8-pie
+    "RSE", # flake8-raise
+]
+
+[format]
+quote-style = "single"
+skip-magic-trailing-comma = false
+
+[lint.flake8-quotes]
+docstring-quotes = "double"
+inline-quotes = "single"
+
+[lint.isort]
+force-wrap-aliases = true
+split-on-trailing-comma = true
+lines-after-imports = 2
+combine-as-imports = true
